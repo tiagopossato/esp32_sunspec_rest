@@ -8,5 +8,11 @@
         "board/esp32-wrover-kit-3.3v.cfg"
     ],
     "idf.pythonBinPath": "/home/tiago/.espressif/python_env/idf5.0_py3.10_env/bin/python",
-    "idf.toolsPath": "/home/tiago/.espressif"
+    "idf.toolsPath": "/home/tiago/.espressif",
+    "files.associations": {
+        "freertos.h": "c",
+        "sht31_reader.h": "c"
+    },
+    "idf.flashType": "UART",
+    "idf.port": "/dev/ttyUSB0"
 }
