@@ -38,7 +38,7 @@ void sht31_begin()
 
 float get_sht_temperature()
 {
-    static float tmp;
+    static float tmp = 0;
     if (xSemaphore_sht != NULL)
     {
         // See if we can obtain the semaphore.  If the semaphore is not available

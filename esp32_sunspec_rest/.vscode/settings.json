@@ -11,7 +11,15 @@
     "idf.toolsPath": "/home/tiago/.espressif",
     "files.associations": {
         "freertos.h": "c",
-        "sht31_reader.h": "c"
+        "sht31_reader.h": "c",
+        "array": "c",
+        "bitset": "c",
+        "string_view": "c",
+        "initializer_list": "c",
+        "regex": "c",
+        "utility": "c",
+        "sunspec_models.h": "c",
+        "stdint.h": "c"
     },
     "idf.flashType": "UART",
     "idf.port": "/dev/ttyUSB0"
