@@ -39,7 +39,7 @@ char *get_m307_p_humidity_value()
 char *get_m307_p_pressure_value()
 {
     static char tmp[6];
-    snprintf(tmp, 6, "%d", (int)(get_bmp_pressure()/100));
+    snprintf(tmp, 6, "%d", (int)(get_bmp_pressure() / 100));
     return tmp;
 }
 
@@ -97,6 +97,8 @@ model *init_model_307()
     model_id->_static = st_S;
     model_id->get_value = get_m307_p_id_value;
     model_id->next = md_length;
+
+    m307->group->count = 5;
 
     // associa o primeiro ponto ao ponto id
     m307->group->points = model_id;

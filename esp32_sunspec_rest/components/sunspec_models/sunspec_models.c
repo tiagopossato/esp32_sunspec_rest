@@ -6,9 +6,6 @@
 
 #include "sunspec_models.h"
 
-void print_points(group *);
-void print_group(model *);
-
 char *get_point_type_name(point_type t)
 {
     switch (t)
@@ -165,7 +162,7 @@ group *create_group(char *name, point_type type)
     g->type = type;
     g->count = 1; //["integer", "string"], "default": 1
     g->points = NULL;
-    g->groups = NULL;
+    // g->groups = NULL;
     g->label = NULL;
     g->desc = NULL;
     g->detail = NULL;
@@ -184,15 +181,43 @@ model *create_model(uint16_t id)
     return m;
 }
 
-void point_to_cjson(cJSON *root, point *p)
+void point_to_cjson(cJSON *root, point *p, bool summary)
 {
     if (root == NULL)
     {
         return;
     }
+    // access_type _access;
+    if (p->_access == at_RW)
+    {
+        cJSON_AddStringToObject(root, "access", get_access_type_name(p->_access));
+    }
+    // char *desc;
+    if (p->desc != NULL)
+    {
+        cJSON_AddStringToObject(root, "desc", p->desc);
+    }
+    // char *label;
+    if (p->label != NULL)
+    {
+        cJSON_AddStringToObject(root, "label", p->label);
+    }
+    // mandatory_type _mandatory;
+    if (p->_mandatory == mt_M)
+    {
+        cJSON_AddStringToObject(root, "mandatory", get_mandatory_type_name(p->_mandatory));
+    }
     // char *name;
     // required
     cJSON_AddStringToObject(root, "name", p->name);
+    // int size;
+    // required
+    cJSON_AddNumberToObject(root, "size", p->size);
+    // static_type _static;
+    if (p->_static == st_S)
+    {
+        cJSON_AddStringToObject(root, "static", get_static_type_name(p->_static));
+    }
     // point_type _type;
     // required
     cJSON_AddStringToObject(root, "type", get_point_type_name(p->_type));
@@ -239,9 +264,6 @@ void point_to_cjson(cJSON *root, point *p)
     {
         cJSON_AddNumberToObject(root, "count", p->count);
     }
-    // int size;
-    // required
-    cJSON_AddNumberToObject(root, "size", p->size);
 
     // int sf; // "type": ["integer", "string"], "minimum": -10, "maximum": 10
     if (p->sf != 0)
@@ -254,31 +276,6 @@ void point_to_cjson(cJSON *root, point *p)
         cJSON_AddStringToObject(root, "units", p->units);
     }
 
-    // access_type _access;
-    // if (p->_access == at_RW)
-    // {
-    cJSON_AddStringToObject(root, "access", get_access_type_name(p->_access));
-    // }
-    // mandatory_type _mandatory;
-    // if (p->_mandatory == mt_M)
-    // {
-    cJSON_AddStringToObject(root, "mandatory", get_mandatory_type_name(p->_mandatory));
-    // }
-    // static_type _static;
-    // if (p->_static == st_S)
-    // {
-    cJSON_AddStringToObject(root, "static", get_static_type_name(p->_static));
-    // }
-    // char *label;
-    if (p->label != NULL)
-    {
-        cJSON_AddStringToObject(root, "label", p->label);
-    }
-    // char *desc;
-    if (p->desc != NULL)
-    {
-        cJSON_AddStringToObject(root, "desc", p->desc);
-    }
     // char *detail;
     if (p->detail != NULL)
     {
@@ -291,42 +288,91 @@ void point_to_cjson(cJSON *root, point *p)
     }
 }
 
-void print_points(group *g)
+void group_to_cjson(cJSON *root, group *g, bool summary)
 {
+    if (root == NULL)
+    {
+        return;
+    }
+    // char *desc;
+    if (g->desc != NULL)
+    {
+        cJSON_AddStringToObject(root, "desc", g->desc);
+    }
+    // char *label;
+    if (g->label != NULL)
+    {
+        cJSON_AddStringToObject(root, "label", g->label);
+    }
+    // char *name;
+    // required
+    cJSON_AddStringToObject(root, "name", g->name);
+
+    // point_type _type;
+    // required
+    cJSON_AddStringToObject(root, "type", get_group_type_name(g->type));
+    // int count;     //["integer", "string"], "default": 1
+    if (g->count != 1)
+    {
+        cJSON_AddNumberToObject(root, "count", g->count);
+    }
+
+    // char *detail;
+    if (g->detail != NULL)
+    {
+        cJSON_AddStringToObject(root, "detail", g->detail);
+    }
+    // char *notes;
+    if (g->notes != NULL)
+    {
+        cJSON_AddStringToObject(root, "notes", g->notes);
+    }
+
+    // point *points; //"type": "array",
+    cJSON *points = cJSON_AddArrayToObject(root, "points");
+    cJSON *json_point;
     point *p = g->points;
-    cJSON *root;
-    root = cJSON_CreateObject();
+
     while (p != NULL)
     {
-        point_to_cjson(root, p);
-        char *my_json_string = cJSON_Print(root);
-        printf("%s\n", my_json_string);
+        json_point = cJSON_CreateObject();
+        point_to_cjson(json_point, p, summary);
+        cJSON_AddItemToArray(points, json_point);
         p = p->next;
-        if (p != NULL)
-            root = cJSON_CreateObject();
     }
-    if (root != NULL)
+
+    // group *groups; //"type": "array", TODO: implementar
+}
+
+void model_to_cjson(cJSON *root, model *m, bool summary)
+{
+    if (root == NULL)
     {
-        cJSON_Delete(root);
+        return;
     }
+    // uint16_t id;
+    cJSON_AddNumberToObject(root, "id", m->id);
+    // group *group;
+    cJSON *group = cJSON_AddObjectToObject(root, "group");
+    group_to_cjson(group, m->group, summary);
 }
 
-void print_group(model *m)
+void sunspec_to_cjson(cJSON *root, SunSpec *suns, bool summary)
 {
-    group *g = m->group;
-    printf("\n\tname: %s, \n\ttype: %s, \n\tcount: %d, \n\tlabel: %s",
-           g->name == NULL ? "_" : g->name, get_group_type_name(g->type), g->count, g->label == NULL ? "_" : g->label);
+    if (root == NULL)
+    {
+        return;
+    }
+    cJSON *models = cJSON_AddArrayToObject(root, "models");
 
-    printf("\n\tdesc: %s, \n\tdetail: %s, \n\tnotes: %s\n\tpoints: [\n",
-           g->desc == NULL ? "_" : g->desc, g->detail == NULL ? "_" : g->detail, g->notes == NULL ? "_" : g->notes);
-    print_points(g);
-    printf("\t]\n");
-}
+    cJSON *json_model;
+    model *m = suns->first;
 
-void print_model(model *m)
-{
-    printf("{\n\tid: %d, \n\tgroup:{", m->id);
-    print_group(m);
-
-    printf("}\n");
+    while (m != NULL)
+    {
+        json_model = cJSON_CreateObject();
+        model_to_cjson(json_model, m, summary);
+        cJSON_AddItemToArray(models, json_model);
+        m = m->next;
+    }
 }

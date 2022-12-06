@@ -92,7 +92,7 @@ typedef struct group
     group_type type;
     int count;     //["integer", "string"], "default": 1
     point *points; //"type": "array",
-    group *groups; //"type": "array",
+    //group *groups; //"type": "array", TODO: implementar
     char *label;
     char *desc;
     char *detail;
@@ -113,7 +113,7 @@ typedef struct model
     model *next;
 } model;
 
-typedef struct
+typedef struct SunSpec
 {
     model *first;
 } SunSpec;
@@ -133,6 +133,10 @@ char *get_static_type_name(static_type);
 /**
  * Recebe um objeto cJSON e insere os valores do point
 */
-void point_to_cjson(cJSON *root, point *p);
+void point_to_cjson(cJSON *root, point *p, bool summary);
 
-void print_model(model *m);
+void group_to_cjson(cJSON *root, group *g, bool summary);
+
+void model_to_cjson(cJSON *root, model *m, bool summary);
+
+void sunspec_to_cjson(cJSON *root, SunSpec *suns, bool summary);

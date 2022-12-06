@@ -94,6 +94,7 @@ model *init_model_1()
     model_id->get_value = get_m1_p_id_value;
     model_id->next = md_length;
 
+    m1->group->count = 4;
     // associa o primeiro ponto ao ponto id
     m1->group->points = model_id;
 

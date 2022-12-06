@@ -81,8 +81,6 @@ float get_sht_humidity()
 void sht31_reader(void *pvParameters)
 {
 
-    TickType_t last_wakeup = xTaskGetTickCount();
-
     // get the measurement duration for high repeatability;
     uint8_t duration = sht3x_get_measurement_duration(SHT3X_HIGH);
 
@@ -90,7 +88,6 @@ void sht31_reader(void *pvParameters)
     {
         // Trigger one measurement in single shot mode with high repeatability.
         ESP_ERROR_CHECK(sht3x_start_measurement(&dev, SHT3X_SINGLE_SHOT, SHT3X_HIGH));
-
         // Wait until measurement is ready (constant time of at least 30 ms
         // or the duration returned from *sht3x_get_measurement_duration*).
         vTaskDelay(duration);
@@ -106,7 +103,7 @@ void sht31_reader(void *pvParameters)
             }
         }
 
-        // wait until 5 seconds are over
-        vTaskDelayUntil(&last_wakeup, pdMS_TO_TICKS(2000));
+        // wait until 2 seconds are over
+        vTaskDelay(pdMS_TO_TICKS(2000));
     }
 }

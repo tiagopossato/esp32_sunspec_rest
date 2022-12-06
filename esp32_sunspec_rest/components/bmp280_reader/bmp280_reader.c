@@ -79,7 +79,7 @@ void bmp280_reader(void *pvParameters)
 
     while (1)
     {
-        vTaskDelay(pdMS_TO_TICKS(2000));
+
         if (xSemaphore_bmp != NULL)
         {
             if (xSemaphoreTake(xSemaphore_bmp, portMAX_DELAY) == pdTRUE)
@@ -93,6 +93,7 @@ void bmp280_reader(void *pvParameters)
                 xSemaphoreGive(xSemaphore_bmp);
             }
         }
+        vTaskDelay(pdMS_TO_TICKS(2000));
         // printf("Pressure: %.2f Pa, Temperature: %.2f C", bmp_pressure, bmp_temperature);
         // if (bme280p)
         //     printf(", Humidity: %.2f\n", bmp_humidity);

@@ -1,0 +1,1 @@
+ 1 - Criar uma função para adicionar pontos ao grupo, para incrementar automaticamente o parâmetro 'count'?
