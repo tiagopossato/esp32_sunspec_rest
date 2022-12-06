@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include "sht31_reader.h"
+#include "bmp280_reader.h"
 
 #include "app_sunspec_models.h"
 #include "sunspec_models.h"
@@ -31,7 +32,14 @@ char *get_m307_p_temperature_value()
 char *get_m307_p_humidity_value()
 {
     static char tmp[6];
-    sprintf(tmp, "%d", (int)(get_sht_humidity()));
+    snprintf(tmp, 6, "%d", (int)(get_sht_humidity()));
+    return tmp;
+}
+
+char *get_m307_p_pressure_value()
+{
+    static char tmp[6];
+    snprintf(tmp, 6, "%d", (int)(get_bmp_pressure()/100));
     return tmp;
 }
 
@@ -55,11 +63,17 @@ model *init_model_307()
     // IMPORTANTE: para facilitar a programação, iniciar do último para o primeir0
     //              assim já é possível ir associando o ponteiro *next
 
+    point *pressure = create_point("Pres", pt_int16, 1);
+    pressure->label = allocate_and_fill("Barometric Pressure");
+    pressure->units = allocate_and_fill("HPa");
+    pressure->get_value = get_m307_p_pressure_value;
+    pressure->next = NULL;
+
     point *humidity = create_point("RH", pt_int16, 1);
     humidity->label = allocate_and_fill("Relative Humidity");
     humidity->units = allocate_and_fill("Pct");
     humidity->get_value = get_m307_p_humidity_value;
-    humidity->next = NULL;
+    humidity->next = pressure;
 
     point *temperature = create_point("TmpAmb", pt_int16, 1);
     temperature->label = allocate_and_fill("Ambient Temperature");

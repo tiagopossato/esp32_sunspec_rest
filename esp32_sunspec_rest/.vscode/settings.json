@@ -19,7 +19,11 @@
         "regex": "c",
         "utility": "c",
         "sunspec_models.h": "c",
-        "stdint.h": "c"
+        "stdint.h": "c",
+        "typeinfo": "c",
+        "chrono": "c",
+        "algorithm": "c",
+        "cjson.h": "c"
     },
     "idf.flashType": "UART",
     "idf.port": "/dev/ttyUSB0"

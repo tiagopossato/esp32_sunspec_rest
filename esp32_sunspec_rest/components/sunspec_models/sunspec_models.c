@@ -178,19 +178,136 @@ model *create_model(uint16_t id)
 {
     model *m = (model *)malloc(sizeof(struct model));
     m->id = id;
+    m->group = NULL;
+    m->next = NULL;
+
     return m;
+}
+
+void point_to_cjson(cJSON *root, point *p)
+{
+    if (root == NULL)
+    {
+        return;
+    }
+    // char *name;
+    // required
+    cJSON_AddStringToObject(root, "name", p->name);
+    // point_type _type;
+    // required
+    cJSON_AddStringToObject(root, "type", get_point_type_name(p->_type));
+
+    // char *(*get_value)();      //"type": ["integer", "string"]
+    if (p->get_value != NULL)
+    {
+        // TODO: tratar corretamente todos os casos
+        switch (p->_type)
+        {
+        case pt_int16:
+        case pt_int32:
+        case pt_int64:
+        case pt_raw16:
+        case pt_uint16:
+        case pt_uint32:
+        case pt_uint64:
+        case pt_float32:
+        case pt_float64:
+        case pt_sf:
+        case pt_count:
+            cJSON_AddNumberToObject(root, "value", strtod(p->get_value(), NULL));
+            break;
+        case pt_acc16:
+        case pt_acc32:
+        case pt_acc64:
+        case pt_bitfield16:
+        case pt_bitfield32:
+        case pt_bitfield64:
+        case pt_enum16:
+        case pt_enum32:
+        case pt_string:
+        case pt_pad:
+        case pt_ipaddr:
+        case pt_ipv6addr:
+        case pt_eui48:
+        case pt_sunssf:
+            cJSON_AddStringToObject(root, "value", p->get_value());
+            break;
+        }
+    }
+    // int count;
+    if (p->count != 0)
+    {
+        cJSON_AddNumberToObject(root, "count", p->count);
+    }
+    // int size;
+    // required
+    cJSON_AddNumberToObject(root, "size", p->size);
+
+    // int sf; // "type": ["integer", "string"], "minimum": -10, "maximum": 10
+    if (p->sf != 0)
+    {
+        cJSON_AddNumberToObject(root, "sf", p->sf);
+    }
+    // char *units;
+    if (p->units != NULL)
+    {
+        cJSON_AddStringToObject(root, "units", p->units);
+    }
+
+    // access_type _access;
+    // if (p->_access == at_RW)
+    // {
+    cJSON_AddStringToObject(root, "access", get_access_type_name(p->_access));
+    // }
+    // mandatory_type _mandatory;
+    // if (p->_mandatory == mt_M)
+    // {
+    cJSON_AddStringToObject(root, "mandatory", get_mandatory_type_name(p->_mandatory));
+    // }
+    // static_type _static;
+    // if (p->_static == st_S)
+    // {
+    cJSON_AddStringToObject(root, "static", get_static_type_name(p->_static));
+    // }
+    // char *label;
+    if (p->label != NULL)
+    {
+        cJSON_AddStringToObject(root, "label", p->label);
+    }
+    // char *desc;
+    if (p->desc != NULL)
+    {
+        cJSON_AddStringToObject(root, "desc", p->desc);
+    }
+    // char *detail;
+    if (p->detail != NULL)
+    {
+        cJSON_AddStringToObject(root, "detail", p->detail);
+    }
+    // char *notes;
+    if (p->notes != NULL)
+    {
+        cJSON_AddStringToObject(root, "notes", p->notes);
+    }
 }
 
 void print_points(group *g)
 {
     point *p = g->points;
+    cJSON *root;
+    root = cJSON_CreateObject();
     while (p != NULL)
     {
-        printf("\t{\n\t\tdesc: %s, \n\t\tlabel: %s, \n\t\tmandatory: %s,\n\t\tname: %s,\n\t\tsize: %d, \n\t\tstatic: %s, \n\t\ttype: %s, \n\t\tvalue: %s, \n\t\tunits: %s, \n\t\taccess: %s, \n\t\tcount: %d, \n\t\tdetail: %s, \n\t\tnotes: %s, \n\t\tsf: %d\n\t}\n",
-               p->desc == NULL ? "_" : p->desc, p->label == NULL ? "_" : p->label, get_mandatory_type_name(p->_mandatory), p->name == NULL ? "_" : p->name, p->size, get_static_type_name(p->_static), get_point_type_name(p->_type), p->get_value == NULL ? NULL : p->get_value(),
-               p->units == NULL ? "_" : p->units, get_access_type_name(p->_access), p->count, p->detail == NULL ? "_" : p->detail, p->notes == NULL ? "_" : p->notes, p->sf);
-
+        point_to_cjson(root, p);
+        char *my_json_string = cJSON_Print(root);
+        printf("%s\n", my_json_string);
         p = p->next;
+        if (p != NULL)
+            root = cJSON_CreateObject();
+    }
+    if (root != NULL)
+    {
+        cJSON_Delete(root);
     }
 }
 

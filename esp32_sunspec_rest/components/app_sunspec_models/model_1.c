@@ -25,7 +25,7 @@ char *get_m1_p_length_value()
 
 char *get_m1_p_manufacturer_value()
 {
-    return "\"UTFPR Pato Branco\"";
+    return "UTFPR Pato Branco";
 }
 
 char *get_m1_p_device_adress_value()

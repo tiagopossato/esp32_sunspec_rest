@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdbool.h>
+#include "cJSON.h"
 
 typedef enum
 {
@@ -43,7 +44,6 @@ typedef enum
     at_RW
 } access_type;
 
-
 typedef enum
 {
     mt_M,
@@ -55,7 +55,6 @@ typedef enum
     st_D,
     st_S
 } static_type;
-
 
 // struturas opacas definidas abaixo
 typedef struct point point;
@@ -111,11 +110,18 @@ typedef struct model
     // char *detail;
     // char *notes;
     // comments TODO
+    model *next;
 } model;
+
+typedef struct
+{
+    model *first;
+} SunSpec;
 
 point *create_point(char *name, point_type type, int size);
 group *create_group(char *name, point_type type);
 model *create_model(uint16_t id);
+
 char *allocate_and_fill(char *src);
 
 char *get_point_type_name(point_type);
@@ -124,4 +130,9 @@ char *get_access_type_name(access_type);
 char *get_mandatory_type_name(mandatory_type);
 char *get_static_type_name(static_type);
 
-void print_model(model *);
+/**
+ * Recebe um objeto cJSON e insere os valores do point
+*/
+void point_to_cjson(cJSON *root, point *p);
+
+void print_model(model *m);
