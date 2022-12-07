@@ -37,6 +37,14 @@ char *get_m1_p_device_adress_value()
     return val;
 }
 
+char *get_m1_p_serial_number_value()
+{
+    
+    return "WEFWR-ASD5FAS-2022";
+}
+
+
+
 // recebe uma string contendo o valor e converte para um inteiro sem sinal.
 void set_m1_p_device_adress_value(char *value)
 {
@@ -71,6 +79,25 @@ model *init_model_1()
     device_addres->set_value = set_m1_p_device_adress_value;
     device_addres->next = NULL; // TODO: apontar para o ponto correto
     set_m1_p_device_adress_value("1");
+
+    // "desc": "Manufacturer specific value (32 chars)",
+    // "label": "Serial Number",
+    // "mandatory": "M",
+    // "name": "SN",
+    // "size": 16,
+    // "static": "S",
+    // "type": "string"
+
+                                    // char *name, point_type type, int size)
+    point *serial_number = create_point("SN", pt_string, 16);
+    serial_number->desc = allocate_and_fill("Manufacturer specific value (32 chars)");
+    serial_number->label = allocate_and_fill("Serial Number");
+    serial_number->_mandatory = mt_M;
+    serial_number->_static = st_S;
+    serial_number->get_value = get_m1_p_serial_number_value;
+    serial_number->next = device_addres;
+    
+
 
     point *manufacturer = create_point("Mn", pt_string, 16);
     manufacturer->desc = allocate_and_fill("Well known value registered with SunSpec for compliance");
