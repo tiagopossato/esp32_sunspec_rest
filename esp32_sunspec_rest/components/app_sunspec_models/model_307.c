@@ -13,6 +13,8 @@
 /*********** FUNÇÕES ESPECÍFICAS DO MODELO 307, RETIRAR DAQUI*/
 /**********************************************************/
 
+static model *m307;
+
 char *get_m307_p_id_value()
 {
     return "307";
@@ -46,7 +48,7 @@ char *get_m307_p_pressure_value()
 model *init_model_307()
 {
     // aloca espaço na memoria para a estrutura do modelo
-    model *m307 = create_model(307);
+    m307 = create_model(307);
     if (m307 == NULL)
     {
         return NULL;

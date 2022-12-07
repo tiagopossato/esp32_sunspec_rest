@@ -25,7 +25,10 @@
         "algorithm": "c",
         "cjson.h": "c",
         "memory_resource": "c",
-        "thread": "c"
+        "thread": "c",
+        "nvs_flash.h": "c",
+        "esp_tls.h": "c",
+        "esp_log.h": "c"
     },
     "idf.flashType": "UART",
     "idf.port": "/dev/ttyUSB0"

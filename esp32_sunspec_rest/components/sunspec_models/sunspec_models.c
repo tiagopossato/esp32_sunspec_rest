@@ -7,7 +7,38 @@
 
 #include "sunspec_models.h"
 
+static SunSpec *sunspec;
+
 void get_points_by_name(cJSON *root, model *m, char *point_name_list[]);
+
+SunSpec *init_sunspec()
+{
+    sunspec = (SunSpec *)malloc(sizeof(SunSpec));
+    sunspec->first = NULL;
+    return sunspec;
+}
+
+SunSpec *get_sunspec()
+{
+    return sunspec;
+}
+
+void add_model(SunSpec *sunspec, model *m)
+{
+    model *last = sunspec->first;
+    if (last == NULL)
+    {
+        sunspec->first = m;
+    }
+    else
+    {
+        while (last->next != NULL)
+        {
+            last = last->next;
+        }
+        last->next = m;
+    }
+}
 
 char *get_point_type_name(point_type t)
 {

@@ -10,44 +10,49 @@
 #include "app_sunspec_models.h"
 #include "bmp280_reader.h"
 #include "sht31_reader.h"
-#include "app_wifi.h"
+#include "app_https_server.h"
 
 static const char *TAG = "main";
 
-SunSpec sunspec;
-
+SunSpec *suns;
 model *model_1;
 model *model_307;
+
 void app_main(void)
 {
-    app_wifi_init_softap();
-
     cJSON *root;
     char *my_json_string;
+
+    suns = init_sunspec();
+    // inicializa os modelos
+    model_1 = init_model_1();
+    model_307 = init_model_307();
+    // adiciona os modelos a lista de modelos
+    add_model(suns, model_1);
+    add_model(suns, model_307);
+
+    app_https_server_start();
+    // while (1)
+    // {
+    //     vTaskDelay(1000 / portTICK_PERIOD_MS);
+    // }
 
     // inicializa os sensores
     bmp280_begin();
     sht31_begin();
     vTaskDelay(1000 / portTICK_PERIOD_MS);
 
-    // inicializa os modelos
-    model_1 = init_model_1();
-    model_307 = init_model_307();
+    // root = cJSON_CreateObject();
 
-    model_1->next = model_307;
-    sunspec.first = model_1;
+    // sunspec_to_cjson(root, &sunspec, true);
+    // my_json_string = cJSON_Print(root);
+    // ESP_LOGI(TAG, "\n%s", my_json_string);
+    // ESP_LOGI(TAG, "Tamanho do JSON: %d", strlen(my_json_string));
+    // cJSON_Minify(my_json_string);
+    // ESP_LOGI(TAG, "Tamanho do JSON minimizado: %d", strlen(my_json_string));
 
-    root = cJSON_CreateObject();
-
-    sunspec_to_cjson(root, &sunspec, true);
-    my_json_string = cJSON_Print(root);
-    ESP_LOGI(TAG, "\n%s", my_json_string);
-    ESP_LOGI(TAG, "Tamanho do JSON: %d", strlen(my_json_string));
-    cJSON_Minify(my_json_string);
-    ESP_LOGI(TAG, "Tamanho do JSON minimizado: %d", strlen(my_json_string));
-
-    cJSON_Delete(root);
-    free(my_json_string);
+    // cJSON_Delete(root);
+    // free(my_json_string);
     // while (1)
     // {
     //     vTaskDelay(1000 / portTICK_PERIOD_MS);
@@ -58,9 +63,8 @@ void app_main(void)
 
     while (1)
     {
-
         root = cJSON_CreateObject();
-        get_model_cjson_points_by_name(root, &sunspec, 307, point_name_list);
+        get_model_cjson_points_by_name(root, suns, 307, point_name_list);
         my_json_string = cJSON_Print(root);
         cJSON_Minify(my_json_string);
         printf("%s\n", my_json_string);

@@ -92,7 +92,7 @@ typedef struct group
     group_type type;
     int count;     //["integer", "string"], "default": 1
     point *points; //"type": "array",
-    //group *groups; //"type": "array", TODO: implementar
+    // group *groups; //"type": "array", TODO: implementar
     char *label;
     char *desc;
     char *detail;
@@ -132,7 +132,7 @@ char *get_static_type_name(static_type);
 
 /**
  * Recebe um objeto cJSON e insere os valores do point
-*/
+ */
 void point_to_cjson(cJSON *root, point *p);
 
 void group_to_cjson(cJSON *root, group *g);
@@ -145,7 +145,13 @@ void sunspec_to_cjson(cJSON *root, SunSpec *suns, bool summary);
  * busca um modelo pelo id
  * retorna true e o modelo se encontrado
  * retorna false e o modelo nulo se não encontrado
-*/
+ */
 bool get_model_cjson_by_id(cJSON *root, SunSpec *suns, uint16_t model_id);
 
 bool get_model_cjson_points_by_name(cJSON *root, SunSpec *suns, uint16_t model_id, char *point_name_list[]);
+
+SunSpec *init_sunspec();
+
+SunSpec *get_sunspec();
+
+void add_model(SunSpec *sunspec, model *m);

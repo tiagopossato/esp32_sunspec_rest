@@ -7,6 +7,8 @@
 #include "app_sunspec_models.h"
 #include "sunspec_models.h"
 
+static model *m1;
+
 
 /**********************************************************/
 /*********** FUNÇÕES ESPECÍFICAS DO MODELO 01, RETIRAR DAQUI*/
@@ -44,7 +46,7 @@ void set_m1_p_device_adress_value(char *value)
 model *init_model_1()
 {
     // aloca espaço na memoria para a estrutura do modelo
-    model *m1 = create_model(1);
+    m1 = create_model(1);
     if (m1 == NULL)
     {
         return NULL;
