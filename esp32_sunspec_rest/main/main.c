@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include <string.h>
+
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 #include <esp_system.h>
@@ -34,29 +36,35 @@ void app_main(void)
     model_1->next = model_307;
     sunspec.first = model_1;
 
-    // root = cJSON_CreateObject();
-    // model_to_cjson(root, model_1);
-    // my_json_string = cJSON_Print(root);
-    // ESP_LOGI(TAG, "\n%s", my_json_string);
-
-    // root = cJSON_CreateObject();
-    // model_to_cjson(root, model_307);
-    // my_json_string = cJSON_Print(root);
-    // ESP_LOGI(TAG, "\n%s", my_json_string);
-
     root = cJSON_CreateObject();
-    sunspec_to_cjson(root, &sunspec, false);
+
+    sunspec_to_cjson(root, &sunspec, true);
     my_json_string = cJSON_Print(root);
     ESP_LOGI(TAG, "\n%s", my_json_string);
+    ESP_LOGI(TAG, "Tamanho do JSON: %d", strlen(my_json_string));
+    cJSON_Minify(my_json_string);
+    ESP_LOGI(TAG, "Tamanho do JSON minimizado: %d", strlen(my_json_string));
 
+    cJSON_Delete(root);
+    free(my_json_string);
+    // while (1)
+    // {
+    //     vTaskDelay(1000 / portTICK_PERIOD_MS);
+    // }
 
-    // imprime o modelo 307 a cada 5 segundos
+    // imprime o temperatura, umidade e pressao do modelo 307 a cada 5 segundos
+    char *point_name_list[] = {"TmpAmb", "RH", "Pres","JKJK",NULL};
+
     while (1)
     {
+
         root = cJSON_CreateObject();
-        model_to_cjson(root, model_307, false);
+        get_model_cjson_points_by_name(root, &sunspec, 307, point_name_list);
         my_json_string = cJSON_Print(root);
-        ESP_LOGI(TAG, "\n%s", my_json_string);
+        cJSON_Minify(my_json_string);
+        printf("%s\n", my_json_string);
+        cJSON_Delete(root);
+        free(my_json_string);
         // ESP_LOGI(TAG, "Temperature SHT: %.2f C", get_sht_temperature());
         // ESP_LOGI(TAG, "Temperature BMP: %.2f C", get_bmp_temperature());
         // ESP_LOGI(TAG, "Humidity SHT: %.2f %%", get_sht_humidity());

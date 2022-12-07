@@ -3,8 +3,11 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <string.h>
+#include "esp_log.h"
 
 #include "sunspec_models.h"
+
+void get_points_by_name(cJSON *root, model *m, char *point_name_list[]);
 
 char *get_point_type_name(point_type t)
 {
@@ -181,7 +184,7 @@ model *create_model(uint16_t id)
     return m;
 }
 
-void point_to_cjson(cJSON *root, point *p, bool summary)
+void point_to_cjson(cJSON *root, point *p)
 {
     if (root == NULL)
     {
@@ -288,7 +291,7 @@ void point_to_cjson(cJSON *root, point *p, bool summary)
     }
 }
 
-void group_to_cjson(cJSON *root, group *g, bool summary)
+void group_to_cjson(cJSON *root, group *g)
 {
     if (root == NULL)
     {
@@ -336,7 +339,7 @@ void group_to_cjson(cJSON *root, group *g, bool summary)
     while (p != NULL)
     {
         json_point = cJSON_CreateObject();
-        point_to_cjson(json_point, p, summary);
+        point_to_cjson(json_point, p);
         cJSON_AddItemToArray(points, json_point);
         p = p->next;
     }
@@ -350,11 +353,17 @@ void model_to_cjson(cJSON *root, model *m, bool summary)
     {
         return;
     }
+    if (summary)
+    {
+        cJSON_AddStringToObject(root, "name", m->group->name);
+        cJSON_AddNumberToObject(root, "id", m->id);
+        cJSON_AddNumberToObject(root, "count", m->group->count);
+        return;
+    }
     // uint16_t id;
     cJSON_AddNumberToObject(root, "id", m->id);
-    // group *group;
-    cJSON *group = cJSON_AddObjectToObject(root, "group");
-    group_to_cjson(group, m->group, summary);
+
+    group_to_cjson(root, m->group);
 }
 
 void sunspec_to_cjson(cJSON *root, SunSpec *suns, bool summary)
@@ -375,4 +384,115 @@ void sunspec_to_cjson(cJSON *root, SunSpec *suns, bool summary)
         cJSON_AddItemToArray(models, json_model);
         m = m->next;
     }
+}
+
+bool get_model_cjson_by_id(cJSON *root, SunSpec *suns, uint16_t model_id)
+{
+    if (root == NULL)
+    {
+        return false;
+    }
+    model *m = suns->first;
+    if (m == NULL)
+    {
+        return false;
+    }
+    cJSON *models = cJSON_AddArrayToObject(root, "models");
+    cJSON *json_model;
+
+    while (m != NULL)
+    {
+        if (m->id == model_id)
+        {
+            // model_to_cjson(root, m, false);
+            json_model = cJSON_CreateObject();
+            model_to_cjson(json_model, m, false);
+            cJSON_AddItemToArray(models, json_model);
+            return true;
+        }
+        m = m->next;
+    }
+    return false;
+}
+
+void get_points_by_name(cJSON *root, model *m, char *point_name_list[])
+{
+    point *p = m->group->points;
+    while (p != NULL)
+    {
+        for (int i = 0; point_name_list[i] != NULL; i++)
+        {
+            // ESP_LOGI("get_points_by_name", "point_name_list[%d] = %s", i, point_name_list[i]);
+            if (strcmp(p->name, point_name_list[i]) == 0)
+            {
+                if (p->get_value != NULL)
+                {
+                    // TODO: tratar corretamente todos os casos
+                    switch (p->_type)
+                    {
+                    case pt_int16:
+                    case pt_int32:
+                    case pt_int64:
+                    case pt_raw16:
+                    case pt_uint16:
+                    case pt_uint32:
+                    case pt_uint64:
+                    case pt_float32:
+                    case pt_float64:
+                    case pt_sf:
+                    case pt_count:
+                        cJSON_AddNumberToObject(root, p->name, strtod(p->get_value(), NULL));
+                        break;
+                    case pt_acc16:
+                    case pt_acc32:
+                    case pt_acc64:
+                    case pt_bitfield16:
+                    case pt_bitfield32:
+                    case pt_bitfield64:
+                    case pt_enum16:
+                    case pt_enum32:
+                    case pt_string:
+                    case pt_pad:
+                    case pt_ipaddr:
+                    case pt_ipv6addr:
+                    case pt_eui48:
+                    case pt_sunssf:
+                        cJSON_AddStringToObject(root, p->name, p->get_value());
+                        break;
+                    }
+                }
+            }
+        }
+        p = p->next;
+    }
+}
+
+bool get_model_cjson_points_by_name(cJSON *root, SunSpec *suns, uint16_t model_id, char *point_name_list[])
+{
+    if (root == NULL)
+    {
+        return false;
+    }
+    model *m = suns->first;
+    if (m == NULL)
+    {
+        return false;
+    }
+    cJSON *models = cJSON_AddArrayToObject(root, "models");
+    cJSON *json_model;
+
+    while (m != NULL)
+    {
+        if (m->id == model_id)
+        {
+            json_model = cJSON_CreateObject();
+            cJSON_AddStringToObject(json_model, "name", m->group->name);
+            cJSON_AddNumberToObject(json_model, "id", m->id);
+            get_points_by_name(json_model, m, point_name_list);
+            cJSON_AddItemToArray(models, json_model);
+            return true;
+        }
+        m = m->next;
+    }
+    return false;
 }

@@ -24,7 +24,8 @@
         "chrono": "c",
         "algorithm": "c",
         "cjson.h": "c",
-        "memory_resource": "c"
+        "memory_resource": "c",
+        "thread": "c"
     },
     "idf.flashType": "UART",
     "idf.port": "/dev/ttyUSB0"

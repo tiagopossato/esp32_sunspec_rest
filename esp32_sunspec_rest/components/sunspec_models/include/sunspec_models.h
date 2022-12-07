@@ -133,10 +133,19 @@ char *get_static_type_name(static_type);
 /**
  * Recebe um objeto cJSON e insere os valores do point
 */
-void point_to_cjson(cJSON *root, point *p, bool summary);
+void point_to_cjson(cJSON *root, point *p);
 
-void group_to_cjson(cJSON *root, group *g, bool summary);
+void group_to_cjson(cJSON *root, group *g);
 
 void model_to_cjson(cJSON *root, model *m, bool summary);
 
 void sunspec_to_cjson(cJSON *root, SunSpec *suns, bool summary);
+
+/**
+ * busca um modelo pelo id
+ * retorna true e o modelo se encontrado
+ * retorna false e o modelo nulo se não encontrado
+*/
+bool get_model_cjson_by_id(cJSON *root, SunSpec *suns, uint16_t model_id);
+
+bool get_model_cjson_points_by_name(cJSON *root, SunSpec *suns, uint16_t model_id, char *point_name_list[]);
