@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <string.h>
-
+#include "sdkconfig.h"
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 #include <esp_system.h>
@@ -10,8 +10,7 @@
 #include "app_sunspec_models.h"
 #include "bmp280_reader.h"
 #include "sht31_reader.h"
-
-#include "sdkconfig.h"
+#include "app_wifi.h"
 
 static const char *TAG = "main";
 
@@ -21,6 +20,8 @@ model *model_1;
 model *model_307;
 void app_main(void)
 {
+    app_wifi_init_softap();
+
     cJSON *root;
     char *my_json_string;
 
@@ -53,7 +54,7 @@ void app_main(void)
     // }
 
     // imprime o temperatura, umidade e pressao do modelo 307 a cada 5 segundos
-    char *point_name_list[] = {"TmpAmb", "RH", "Pres","JKJK",NULL};
+    char *point_name_list[] = {"TmpAmb", "RH", "Pres", "JKJK", NULL};
 
     while (1)
     {

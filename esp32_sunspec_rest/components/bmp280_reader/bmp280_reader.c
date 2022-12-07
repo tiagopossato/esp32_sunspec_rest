@@ -2,6 +2,7 @@
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 #include <esp_system.h>
+#include <esp_log.h>
 #include "bmp280.h"
 #include <string.h>
 #include "bmp280_reader.h"
@@ -16,15 +17,13 @@ void bmp280_begin()
     xSemaphore_bmp = xSemaphoreCreateMutex();
     if (xSemaphore_bmp != NULL)
     {
-        // The semaphore was created successfully.
-        // The semaphore can now be used.
+        xTaskCreatePinnedToCore(bmp280_reader, "bmp280_test", configMINIMAL_STACK_SIZE * 8, NULL, 5, NULL, APP_CPU_NUM);
     }
-    xTaskCreatePinnedToCore(bmp280_reader, "bmp280_test", configMINIMAL_STACK_SIZE * 8, NULL, 5, NULL, APP_CPU_NUM);
 }
 
 float get_bmp_temperature()
 {
-    static float tmp;
+    static float tmp = -127;
     if (xSemaphore_bmp != NULL)
     {
         // See if we can obtain the semaphore.  If the semaphore is not available
@@ -46,7 +45,7 @@ float get_bmp_temperature()
 
 float get_bmp_pressure()
 {
-    static float tmp;
+    static float tmp = -127;
     if (xSemaphore_bmp != NULL)
     {
         // See if we can obtain the semaphore.  If the semaphore is not available
@@ -68,36 +67,82 @@ void bmp280_reader(void *pvParameters)
 {
     bmp280_params_t params;
     bmp280_init_default_params(&params);
+    esp_err_t res;
     bmp280_t dev;
     memset(&dev, 0, sizeof(bmp280_t));
+    uint8_t tries = 0;
+    do
+    {
+        res = bmp280_init_desc(&dev, 0x76, 0, 22, 23);
+        if (res != ESP_OK)
+        {
+            if (tries++ > 3)
+            {
+                ESP_LOGE("BMP280", "failed to init descriptor");
+                ESP_ERROR_CHECK_WITHOUT_ABORT(res);
+                bmp_pressure = -12700;
+                bmp_temperature = -12.7;
+                bmp_humidity = -127;
+                vTaskDelete(NULL);
+            }
+            vTaskDelay(pdMS_TO_TICKS(2000));
+        }
+    } while (res != ESP_OK);
 
-    ESP_ERROR_CHECK(bmp280_init_desc(&dev, 0x76, 0, 22, 23));
-    ESP_ERROR_CHECK(bmp280_init(&dev, &params));
+    tries = 0;
+    do
+    {
+        res = bmp280_init(&dev, &params);
+        if (res != ESP_OK)
+        {
+            if (tries++ > 3)
+            {
+                ESP_LOGE("BMP280", "failed to init device");
+                ESP_ERROR_CHECK_WITHOUT_ABORT(res);
+                bmp_pressure = -12700;
+                bmp_temperature = -12.7;
+                bmp_humidity = -127;
+                vTaskDelete(NULL);
+            }
+            vTaskDelay(pdMS_TO_TICKS(2000));
+        }
+    } while (res != ESP_OK);
 
     bool bme280p = dev.id == BME280_CHIP_ID;
     printf("BMP280: found %s\n", bme280p ? "BME280" : "BMP280");
 
     while (1)
     {
-
-        if (xSemaphore_bmp != NULL)
+        tries = 0;
+        do
         {
+            res = ESP_OK;
+
             if (xSemaphoreTake(xSemaphore_bmp, portMAX_DELAY) == pdTRUE)
             {
-                if (bmp280_read_float(&dev, &bmp_temperature, &bmp_pressure, &bmp_humidity) != ESP_OK)
-                {
-                    xSemaphoreGive(xSemaphore_bmp);
-                    printf("Temperature/bmp_pressure reading failed\n");
-                    continue;
-                }
+                // retrieve the values
+                res = bmp280_read_float(&dev, &bmp_temperature, &bmp_pressure, &bmp_humidity);
                 xSemaphoreGive(xSemaphore_bmp);
             }
-        }
+
+            if (res != ESP_OK)
+            {
+                if (tries++ > 3)
+                {
+                    ESP_LOGE("BMP280", "failed to read values");
+                    ESP_ERROR_CHECK_WITHOUT_ABORT(res);
+                    bmp_pressure = -12700;
+                    bmp_temperature = -12.7;
+                    bmp_humidity = -127;
+                    vTaskDelete(NULL);
+                }
+
+                vTaskDelay(pdMS_TO_TICKS(1000));
+            }
+        } while (res != ESP_OK);
+
+        // printf("Pressure: %.2f Pa, Temperature: %.2f C\n", bmp_pressure, bmp_temperature);
+
         vTaskDelay(pdMS_TO_TICKS(2000));
-        // printf("Pressure: %.2f Pa, Temperature: %.2f C", bmp_pressure, bmp_temperature);
-        // if (bme280p)
-        //     printf(", Humidity: %.2f\n", bmp_humidity);
-        // else
-        //     printf("\n");
     }
 }

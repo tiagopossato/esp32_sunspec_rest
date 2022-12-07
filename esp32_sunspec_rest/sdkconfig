@@ -353,6 +353,15 @@ CONFIG_EXAMPLE_CONNECT_IPV6_PREF_LOCAL_LINK=y
 # end of Example Connection Configuration
 
 #
+# Wifi Configuration
+#
+CONFIG_ESP_WIFI_SSID="SunSpec Server"
+CONFIG_ESP_WIFI_PASSWORD=""
+CONFIG_ESP_WIFI_CHANNEL=1
+CONFIG_ESP_MAX_STA_CONN=4
+# end of Wifi Configuration
+
+#
 # Compiler options
 #
 CONFIG_COMPILER_OPTIMIZATION_DEFAULT=y
