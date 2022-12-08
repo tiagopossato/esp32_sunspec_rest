@@ -15,24 +15,47 @@
 #include "app_https_server.h"
 #include "app_sunspec_models.h"
 
-
 /* A simple example that demonstrates how to create GET and POST
  * handlers and start an HTTPS server.
  */
 
-static const char *TAG = "example";
+static const char *TAG = "HTTPS Server";
 
 static SunSpec *suns;
 
 /* An HTTP GET handler */
-static esp_err_t root_get_handler(httpd_req_t *req)
+static esp_err_t get_models(httpd_req_t *req)
 {
+    char *buf;
+    size_t buf_len;
+    bool summary = false;
+
+    /* Read URL query string length and allocate memory for length + 1,
+     * extra byte for null termination */
+    buf_len = httpd_req_get_url_query_len(req) + 1;
+    if (buf_len > 1)
+    {
+        buf = malloc(buf_len);
+        if (httpd_req_get_url_query_str(req, buf, buf_len) == ESP_OK)
+        {
+            // ESP_LOGI(TAG, "Found URL query => %s", buf);
+            char param[32];
+            /* Get value of expected key from query string */
+            if (httpd_query_key_value(buf, "summary", param, sizeof(param)) == ESP_OK)
+            {
+                summary = strcmp(param, "true") == 0 ? true : false;
+                // ESP_LOGI(TAG, "Found URL query parameter => summary=%s, bool value:%d", param, summary);
+            }
+        }
+        free(buf);
+    }
+
     httpd_resp_set_type(req, "application/json");
     suns = get_sunspec();
     cJSON *root = cJSON_CreateObject();
-    sunspec_to_cjson(root, suns, true);
+    sunspec_to_cjson(root, suns, summary);
     char *my_json_string = cJSON_Print(root);
-    // cJSON_Minify(my_json_string);
+    cJSON_Minify(my_json_string);
 
     httpd_resp_send(req, my_json_string, HTTPD_RESP_USE_STRLEN);
 
@@ -42,10 +65,11 @@ static esp_err_t root_get_handler(httpd_req_t *req)
     return ESP_OK;
 }
 
-static const httpd_uri_t root = {
-    .uri = "/",
+static const httpd_uri_t models = {
+    .uri = "/v1/models",
     .method = HTTP_GET,
-    .handler = root_get_handler};
+    .handler = get_models
+    };
 
 static httpd_handle_t start_webserver(void)
 {
@@ -75,7 +99,7 @@ static httpd_handle_t start_webserver(void)
 
     // Set URI handlers
     ESP_LOGI(TAG, "Registering URI handlers");
-    httpd_register_uri_handler(server, &root);
+    httpd_register_uri_handler(server, &models);
     return server;
 }
 

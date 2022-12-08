@@ -31,7 +31,6 @@ void app_main(void)
     add_model(suns, model_1);
     add_model(suns, model_307);
 
-    app_https_server_start();
     // while (1)
     // {
     //     vTaskDelay(1000 / portTICK_PERIOD_MS);
@@ -40,8 +39,11 @@ void app_main(void)
     // inicializa os sensores
     bmp280_begin();
     sht31_begin();
+
     vTaskDelay(1000 / portTICK_PERIOD_MS);
 
+    app_https_server_start();
+    
     // root = cJSON_CreateObject();
 
     // sunspec_to_cjson(root, &sunspec, true);

@@ -1,4 +1,9 @@
- 1 - Criar uma função para adicionar pontos ao grupo, para incrementar automaticamente o parâmetro 'count'?
+1 - /models/{modelId}/instances/{index}
 
+2 - /models/{modelId}/instances/{index}?points
+ 
+4 - POST
 
- Escrever os points do model_1 (doc/model_1.json) no arquivo esp32_sunspec_rest/components/app_sunspec_models/model_1.c
+3 - Autenticação
+
+5 - Mensagens de erro
