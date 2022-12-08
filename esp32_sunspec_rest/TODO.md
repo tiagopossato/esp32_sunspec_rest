@@ -2,7 +2,7 @@
 
 2 - /models/{modelId}/instances/{index}?points
  
-4 - POST
+4 - PATCH
 
 3 - Autenticação
 

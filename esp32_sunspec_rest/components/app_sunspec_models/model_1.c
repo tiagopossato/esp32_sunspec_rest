@@ -10,7 +10,7 @@
 static model *m1;
 
 /**********************************************************/
-/*********** FUNÇÕES ESPECÍFICAS DO MODELO 01, RETIRAR DAQUI*/
+/*********** FUNÇÕES ESPECÍFICAS DO MODELO 01 *************/
 /**********************************************************/
 uint16_t device_address;
 

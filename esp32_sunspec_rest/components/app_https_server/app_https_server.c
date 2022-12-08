@@ -15,15 +15,67 @@
 #include "app_https_server.h"
 #include "app_sunspec_models.h"
 
-/* A simple example that demonstrates how to create GET and POST
- * handlers and start an HTTPS server.
- */
-
 static const char *TAG = "HTTPS Server";
 
 static SunSpec *suns;
 
-/* An HTTP GET handler */
+static esp_err_t get_model(httpd_req_t *req, uint16_t model_id)
+{
+    char *buf;
+    size_t buf_len;
+    char *points;
+    points = malloc(1); //TODO: isso é para não dar erro na compilação. ver isso
+    /* Read URL query string length and allocate memory for length + 1,
+     * extra byte for null termination */
+    buf_len = httpd_req_get_url_query_len(req) + 1;
+    if (buf_len > 1)
+    {
+        buf = malloc(buf_len);
+        if (httpd_req_get_url_query_str(req, buf, buf_len) == ESP_OK)
+        {
+            // ESP_LOGI(TAG, "Found URL query => %s", buf);
+            // points = malloc(buf_len);
+            // reallocate points to the correct size
+            points = realloc(points, buf_len);
+            /* Get value of expected key from query string */
+            if (httpd_query_key_value(buf, "points", points, buf_len) == ESP_OK)
+            {
+                ESP_LOGI(TAG, "points: %s", points);
+            }
+        }
+        free(buf);
+    }
+
+
+    // alterar para que a lista de pontos seja uma string separada por vírgula ao invés de 
+    // um array de strings
+    // get_model_cjson_points_by_name(root, suns, model_id, point_name_list);
+
+    // set connection close
+    httpd_resp_set_hdr(req, "Connection", "close");
+
+    httpd_resp_set_type(req, "application/json");
+    suns = get_sunspec();
+    cJSON *root = cJSON_CreateObject();
+
+    get_model_cjson_by_id(root, suns, model_id);
+    char *my_json_string = cJSON_Print(root);
+    cJSON_Minify(my_json_string);
+
+    httpd_resp_send(req, my_json_string, HTTPD_RESP_USE_STRLEN);
+
+    cJSON_Delete(root);
+    free(my_json_string);
+
+    if (points != NULL)
+    {
+        free(points);
+    }
+
+    return ESP_OK;
+}
+
+/* An HTTP GET handler for models*/
 static esp_err_t get_models(httpd_req_t *req)
 {
     char *buf;
@@ -44,11 +96,13 @@ static esp_err_t get_models(httpd_req_t *req)
             if (httpd_query_key_value(buf, "summary", param, sizeof(param)) == ESP_OK)
             {
                 summary = strcmp(param, "true") == 0 ? true : false;
-                // ESP_LOGI(TAG, "Found URL query parameter => summary=%s, bool value:%d", param, summary);
             }
         }
         free(buf);
     }
+
+    // set connection close
+    httpd_resp_set_hdr(req, "Connection", "close");
 
     httpd_resp_set_type(req, "application/json");
     suns = get_sunspec();
@@ -65,11 +119,36 @@ static esp_err_t get_models(httpd_req_t *req)
     return ESP_OK;
 }
 
-static const httpd_uri_t models = {
-    .uri = "/v1/models",
+/* An HTTP GET handler for models*/
+static esp_err_t get_models_router(httpd_req_t *req)
+{
+    // print uri
+    ESP_LOGI(TAG, "URI: %s", req->uri);
+    // verify model uri
+    if (httpd_uri_match_wildcard("/v1/models??*", req->uri, strlen(req->uri)))
+    {
+        return get_models(req);
+    }
+
+    if (httpd_uri_match_wildcard("/v1/models/1/instances/0??*", req->uri, strlen(req->uri)))
+    {
+        return get_model(req, 1);
+    }
+    // verify model uri
+    if (httpd_uri_match_wildcard("/v1/models/307/instances/0??*", req->uri, strlen(req->uri)))
+    {
+        return get_model(req, 307);
+    }
+
+    httpd_resp_send_404(req);
+
+    return ESP_OK;
+}
+
+static const httpd_uri_t uri_get_models = {
+    .uri = "/v1/models/?*", // “?*” to make the previous character optional, and if present, allow anything to follow.
     .method = HTTP_GET,
-    .handler = get_models
-    };
+    .handler = get_models_router};
 
 static httpd_handle_t start_webserver(void)
 {
@@ -90,6 +169,8 @@ static httpd_handle_t start_webserver(void)
     conf.prvtkey_pem = prvtkey_pem_start;
     conf.prvtkey_len = prvtkey_pem_end - prvtkey_pem_start;
 
+    conf.httpd.uri_match_fn = httpd_uri_match_wildcard;
+
     esp_err_t ret = httpd_ssl_start(&server, &conf);
     if (ESP_OK != ret)
     {
@@ -99,7 +180,8 @@ static httpd_handle_t start_webserver(void)
 
     // Set URI handlers
     ESP_LOGI(TAG, "Registering URI handlers");
-    httpd_register_uri_handler(server, &models);
+    httpd_register_uri_handler(server, &uri_get_models);
+
     return server;
 }
 

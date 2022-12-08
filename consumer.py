@@ -41,14 +41,14 @@ print("\nATENÇÃO, WARNINGS DESABILITADOS\n")
 #     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
 #     writer.writeheader()
 
-interval = 10
+interval = 1
 while(True):
     # measure resquest time
     init_time = datetime.now()
     print(f"Requesting values at: {init_time}")
     try:
 
-        r = requests.get('https://192.168.4.1/v1/models?summary=true', verify=False, timeout=5) #
+        r = requests.get('https://192.168.4.1/v1/models?summary=false', verify=False, timeout=5) #
         end_time = datetime.now()
         print(f"Request time: {end_time - init_time}")
         print(r.status_code)
