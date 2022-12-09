@@ -23,8 +23,22 @@ static esp_err_t get_model(httpd_req_t *req, uint16_t model_id)
 {
     char *buf;
     size_t buf_len;
-    char *points;
-    points = malloc(1); //TODO: isso é para não dar erro na compilação. ver isso
+    char *csv_points;
+    cJSON *root;
+    char *my_json_string;
+
+    // set connection close
+    httpd_resp_set_hdr(req, "Connection", "close");
+    httpd_resp_set_type(req, "application/json");
+
+    // APAGAR DEPOIS
+    //  SET refresh header
+    httpd_resp_set_hdr(req, "Refresh", "5");
+
+    suns = get_sunspec();
+    root = cJSON_CreateObject();
+
+    // csv_points = malloc(1); // TODO: isso é para não dar erro na compilação pois o compilador não enxerga que é feito malloc. ver isso
     /* Read URL query string length and allocate memory for length + 1,
      * extra byte for null termination */
     buf_len = httpd_req_get_url_query_len(req) + 1;
@@ -34,43 +48,32 @@ static esp_err_t get_model(httpd_req_t *req, uint16_t model_id)
         if (httpd_req_get_url_query_str(req, buf, buf_len) == ESP_OK)
         {
             // ESP_LOGI(TAG, "Found URL query => %s", buf);
-            // points = malloc(buf_len);
-            // reallocate points to the correct size
-            points = realloc(points, buf_len);
+            csv_points = malloc(buf_len);
             /* Get value of expected key from query string */
-            if (httpd_query_key_value(buf, "points", points, buf_len) == ESP_OK)
+            if (httpd_query_key_value(buf, "points", csv_points, buf_len) == ESP_OK)
             {
-                ESP_LOGI(TAG, "points: %s", points);
+                get_model_cjson_points_by_name(root, suns, model_id, csv_points);
+                my_json_string = cJSON_Print(root);
+                cJSON_Minify(my_json_string);
+                httpd_resp_send(req, my_json_string, HTTPD_RESP_USE_STRLEN);
+                cJSON_Delete(root);
+                free(my_json_string);
+                free(csv_points);
+                free(buf);
+                return ESP_OK;
             }
+            free(csv_points);
         }
         free(buf);
     }
 
-
-    // alterar para que a lista de pontos seja uma string separada por vírgula ao invés de 
-    // um array de strings
-    // get_model_cjson_points_by_name(root, suns, model_id, point_name_list);
-
-    // set connection close
-    httpd_resp_set_hdr(req, "Connection", "close");
-
-    httpd_resp_set_type(req, "application/json");
-    suns = get_sunspec();
-    cJSON *root = cJSON_CreateObject();
-
+    // if no points are specified, return all points
     get_model_cjson_by_id(root, suns, model_id);
-    char *my_json_string = cJSON_Print(root);
+    my_json_string = cJSON_Print(root);
     cJSON_Minify(my_json_string);
-
     httpd_resp_send(req, my_json_string, HTTPD_RESP_USE_STRLEN);
-
     cJSON_Delete(root);
     free(my_json_string);
-
-    if (points != NULL)
-    {
-        free(points);
-    }
 
     return ESP_OK;
 }
@@ -123,7 +126,7 @@ static esp_err_t get_models(httpd_req_t *req)
 static esp_err_t get_models_router(httpd_req_t *req)
 {
     // print uri
-    ESP_LOGI(TAG, "URI: %s", req->uri);
+    // ESP_LOGI(TAG, "URI: %s", req->uri);
     // verify model uri
     if (httpd_uri_match_wildcard("/v1/models??*", req->uri, strlen(req->uri)))
     {

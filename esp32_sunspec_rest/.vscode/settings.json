@@ -29,8 +29,10 @@
         "nvs_flash.h": "c",
         "esp_tls.h": "c",
         "esp_log.h": "c",
-        "random": "c"
+        "random": "c",
+        "cstring": "cpp"
     },
     "idf.flashType": "UART",
-    "idf.port": "/dev/ttyUSB0"
+    "idf.port": "/dev/ttyUSB0",
+    "cmake.configureOnOpen": true
 }

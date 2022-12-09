@@ -148,7 +148,7 @@ void sunspec_to_cjson(cJSON *root, SunSpec *suns, bool summary);
  */
 bool get_model_cjson_by_id(cJSON *root, SunSpec *suns, uint16_t model_id);
 
-bool get_model_cjson_points_by_name(cJSON *root, SunSpec *suns, uint16_t model_id, char *point_name_list[]);
+bool get_model_cjson_points_by_name(cJSON *root, SunSpec *suns, uint16_t model_id, char *point_name_csv);
 
 SunSpec *init_sunspec();
 

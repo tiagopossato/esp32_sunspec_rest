@@ -9,7 +9,7 @@
 
 static SunSpec *sunspec;
 
-void get_points_by_name(cJSON *root, model *m, char *point_name_list[]);
+void get_points_by_name(cJSON *root, model *m, char *point_name_csv);
 
 SunSpec *init_sunspec()
 {
@@ -446,15 +446,23 @@ bool get_model_cjson_by_id(cJSON *root, SunSpec *suns, uint16_t model_id)
     return false;
 }
 
-void get_points_by_name(cJSON *root, model *m, char *point_name_list[])
+void get_points_by_name(cJSON *root, model *m, char *point_name_csv)
 {
-    point *p = m->group->points;
-    while (p != NULL)
+    point *p;
+    char *token;
+    const char separator[2] = ",";
+
+    // ESP_LOGI("TAG", "point_name_csv: %s", point_name_csv);
+    // take first token
+    token = strtok(point_name_csv, separator);
+
+    while (token != NULL)
     {
-        for (int i = 0; point_name_list[i] != NULL; i++)
+        // take first point
+        p = m->group->points;
+        while (p != NULL)
         {
-            // ESP_LOGI("get_points_by_name", "point_name_list[%d] = %s", i, point_name_list[i]);
-            if (strcmp(p->name, point_name_list[i]) == 0)
+            if (strcmp(p->name, token) == 0)
             {
                 if (p->get_value != NULL)
                 {
@@ -493,12 +501,15 @@ void get_points_by_name(cJSON *root, model *m, char *point_name_list[])
                     }
                 }
             }
+            // take next point
+            p = p->next;
         }
-        p = p->next;
+        // take next token
+        token = strtok(NULL, separator);
     }
 }
 
-bool get_model_cjson_points_by_name(cJSON *root, SunSpec *suns, uint16_t model_id, char *point_name_list[])
+bool get_model_cjson_points_by_name(cJSON *root, SunSpec *suns, uint16_t model_id, char *point_name_csv)
 {
     if (root == NULL)
     {
@@ -519,7 +530,7 @@ bool get_model_cjson_points_by_name(cJSON *root, SunSpec *suns, uint16_t model_i
             json_model = cJSON_CreateObject();
             cJSON_AddStringToObject(json_model, "name", m->group->name);
             cJSON_AddNumberToObject(json_model, "id", m->id);
-            get_points_by_name(json_model, m, point_name_list);
+            get_points_by_name(json_model, m, point_name_csv);
             cJSON_AddItemToArray(models, json_model);
             return true;
         }
