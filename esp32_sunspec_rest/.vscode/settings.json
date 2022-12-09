@@ -30,7 +30,12 @@
         "esp_tls.h": "c",
         "esp_log.h": "c",
         "random": "c",
-        "cstring": "cpp"
+        "cstring": "cpp",
+        "esp_http_server.h": "c",
+        "sdkconfig.h": "c",
+        "http_parser.h": "c",
+        "esp_netif.h": "c",
+        "esp_tls_crypto.h": "c"
     },
     "idf.flashType": "UART",
     "idf.port": "/dev/ttyUSB0",

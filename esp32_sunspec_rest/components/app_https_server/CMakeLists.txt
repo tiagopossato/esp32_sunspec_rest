@@ -1,4 +1,4 @@
-idf_component_register(SRCS "app_https_server.c"
+idf_component_register(SRCS "app_https_server.c" "app_basic_auth.c"
                     INCLUDE_DIRS "include"
                     EMBED_TXTFILES "certs/servercert.pem"
                                    "certs/prvtkey.pem"

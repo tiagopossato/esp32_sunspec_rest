@@ -26,6 +26,11 @@ static const char *TAG = "HTTPS Server";
 
 static SunSpec *suns;
 
+extern esp_err_t basic_auth_handler(httpd_req_t *req);
+
+extern esp_err_t httpd_register_uri_handler_with_auth(httpd_handle_t handle,
+                                                      httpd_uri_t *uri_handler);
+
 static esp_err_t get_model(httpd_req_t *req, uint16_t model_id)
 {
     char *buf;
@@ -147,6 +152,15 @@ static esp_err_t get_models(httpd_req_t *req)
 /*  HTTP GET router for models*/
 static esp_err_t get_models_router(httpd_req_t *req)
 {
+    esp_err_t auth = basic_auth_handler(req);
+    if (auth != ESP_OK)
+    {
+        // Caso a autenticação falhar, a requisição será preenchida com o código de erro
+        //  esta função deve retornar OK para que o servidor envie a resposta de erro
+        return ESP_OK;
+    }
+    // Caso a autenticação seja bem sucedida, a requisição prossegue normalmente
+
     // ESP_LOGI(TAG, "URI: %s", req->uri);
     // verify model uri
     if (httpd_uri_match_wildcard("/v1/models??*", req->uri, strlen(req->uri)))
@@ -169,7 +183,7 @@ static esp_err_t get_models_router(httpd_req_t *req)
     return ESP_OK;
 }
 
-static const httpd_uri_t uri_get_models = {
+httpd_uri_t uri_get_models = {
     .uri = "/v1/models/?*", // “?*” to make the previous character optional, and if present, allow anything to follow.
     .method = HTTP_GET,
     .handler = get_models_router};
@@ -215,7 +229,12 @@ static httpd_handle_t start_webserver(void)
 
     // Set URI handlers
     ESP_LOGI(TAG, "Registering URI handlers");
-    httpd_register_uri_handler(server, &uri_get_models);
+
+    if (httpd_register_uri_handler_with_auth(server, &uri_get_models) != ESP_OK)
+    {
+        ESP_LOGI(TAG, "Error Registering URI handlerss!");
+        return NULL;
+    }
 
     return server;
 }

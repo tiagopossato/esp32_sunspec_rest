@@ -1,4 +1,6 @@
 import requests
+from requests.auth import HTTPBasicAuth
+
 import csv
 from datetime import datetime
 from time import sleep
@@ -41,7 +43,9 @@ print("\nATENÇÃO, WARNINGS DESABILITADOS\n")
 #     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
 #     writer.writeheader()
 
-interval = .10
+
+basic = HTTPBasicAuth('admin', 'admin')
+interval = 1
 avg=0
 count=0
 while(True):
@@ -50,7 +54,7 @@ while(True):
     print(f"Requesting values at: {init_time}")
     try:
 
-        r = requests.get('https://192.168.4.1/v1/models/307/instances/0', verify=False, timeout=5) #
+        r = requests.get('http://192.168.4.1/v1/models/307/instances/0', verify=False, timeout=5, auth=basic)
         end_time = datetime.now()
         request_time=(datetime.now() - init_time).total_seconds()
         count = count + 1

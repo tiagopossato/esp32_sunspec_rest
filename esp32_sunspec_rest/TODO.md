@@ -7,3 +7,5 @@
 3 - Autenticação
 
 5 - Mensagens de erro
+
+6 - Substituir a função allocate_and_fill peal função padrão asprintf https://man7.org/linux/man-pages/man3/asprintf.3.html
