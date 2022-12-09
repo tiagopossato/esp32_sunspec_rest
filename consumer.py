@@ -45,7 +45,7 @@ print("\nATENÇÃO, WARNINGS DESABILITADOS\n")
 
 
 basic = HTTPBasicAuth('admin', 'admin')
-interval = 1
+interval = .1
 avg=0
 count=0
 while(True):
@@ -54,7 +54,7 @@ while(True):
     print(f"Requesting values at: {init_time}")
     try:
 
-        r = requests.get('http://192.168.4.1/v1/models/307/instances/0', verify=False, timeout=5, auth=basic)
+        r = requests.get('https://192.168.4.1/v1/models/307/instances/0', verify=False, timeout=5, auth=basic)
         end_time = datetime.now()
         request_time=(datetime.now() - init_time).total_seconds()
         count = count + 1
@@ -76,6 +76,7 @@ while(True):
             sleep(.1)
     except Exception as e:
         print(e)
+        exit()
         try:
             sleep(interval-(datetime.now() - init_time).total_seconds())
         except:
