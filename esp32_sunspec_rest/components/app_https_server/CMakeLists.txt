@@ -4,7 +4,8 @@ idf_component_register(SRCS "app_https_server.c"
                                    "certs/prvtkey.pem"
                     PRIV_REQUIRES esp_event 
                         nvs_flash 
-                        esp_https_server 
+                        esp_https_server
+                        esp_http_server 
                         esp_netif 
                         esp_wifi
                         json

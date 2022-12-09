@@ -7,13 +7,20 @@
 #include "esp_netif.h"
 #include "cJSON.h"
 
-#include <esp_https_server.h>
 #include "esp_tls.h"
 #include "sdkconfig.h"
 
 #include "app_wifi.h"
 #include "app_https_server.h"
 #include "app_sunspec_models.h"
+
+#define HTTPS_SERVER_ENABLE
+
+#ifdef HTTPS_SERVER_ENABLE
+#include <esp_https_server.h>
+#else
+#include <esp_http_server.h>
+#endif
 
 static const char *TAG = "HTTPS Server";
 
@@ -31,14 +38,12 @@ static esp_err_t get_model(httpd_req_t *req, uint16_t model_id)
     httpd_resp_set_hdr(req, "Connection", "close");
     httpd_resp_set_type(req, "application/json");
 
-    // APAGAR DEPOIS
-    //  SET refresh header
-    httpd_resp_set_hdr(req, "Refresh", "5");
+    // TODO: APAGAR DEPOIS
+    // SET refresh header
+    httpd_resp_set_hdr(req, "Refresh", "1");
 
     suns = get_sunspec();
-    root = cJSON_CreateObject();
 
-    // csv_points = malloc(1); // TODO: isso é para não dar erro na compilação pois o compilador não enxerga que é feito malloc. ver isso
     /* Read URL query string length and allocate memory for length + 1,
      * extra byte for null termination */
     buf_len = httpd_req_get_url_query_len(req) + 1;
@@ -52,15 +57,26 @@ static esp_err_t get_model(httpd_req_t *req, uint16_t model_id)
             /* Get value of expected key from query string */
             if (httpd_query_key_value(buf, "points", csv_points, buf_len) == ESP_OK)
             {
-                get_model_cjson_points_by_name(root, suns, model_id, csv_points);
-                my_json_string = cJSON_Print(root);
-                cJSON_Minify(my_json_string);
-                httpd_resp_send(req, my_json_string, HTTPD_RESP_USE_STRLEN);
-                cJSON_Delete(root);
-                free(my_json_string);
-                free(csv_points);
-                free(buf);
-                return ESP_OK;
+                root = cJSON_CreateObject();
+                if (get_model_cjson_points_by_name(root, suns, model_id, csv_points))
+                {
+                    my_json_string = cJSON_Print(root);
+                    cJSON_Minify(my_json_string);
+                    httpd_resp_send(req, my_json_string, HTTPD_RESP_USE_STRLEN);
+                    cJSON_Delete(root);
+                    free(my_json_string);
+                    free(csv_points);
+                    free(buf);
+                    return ESP_OK;
+                }
+                else
+                {
+                    httpd_resp_send_404(req);
+                    cJSON_Delete(root);
+                    free(csv_points);
+                    free(buf);
+                    return ESP_OK;
+                }
             }
             free(csv_points);
         }
@@ -68,17 +84,23 @@ static esp_err_t get_model(httpd_req_t *req, uint16_t model_id)
     }
 
     // if no points are specified, return all points
-    get_model_cjson_by_id(root, suns, model_id);
-    my_json_string = cJSON_Print(root);
-    cJSON_Minify(my_json_string);
-    httpd_resp_send(req, my_json_string, HTTPD_RESP_USE_STRLEN);
-    cJSON_Delete(root);
-    free(my_json_string);
+    root = cJSON_CreateObject();
+    if (get_model_cjson_by_id(root, suns, model_id))
+    {
+        my_json_string = cJSON_Print(root);
+        cJSON_Minify(my_json_string);
+        httpd_resp_send(req, my_json_string, HTTPD_RESP_USE_STRLEN);
+        free(my_json_string);
+        cJSON_Delete(root);
+        return ESP_OK;
+    }
 
+    httpd_resp_send_404(req);
+    cJSON_Delete(root);
     return ESP_OK;
 }
 
-/* An HTTP GET handler for models*/
+/* HTTP GET handler for models*/
 static esp_err_t get_models(httpd_req_t *req)
 {
     char *buf;
@@ -122,10 +144,9 @@ static esp_err_t get_models(httpd_req_t *req)
     return ESP_OK;
 }
 
-/* An HTTP GET handler for models*/
+/*  HTTP GET router for models*/
 static esp_err_t get_models_router(httpd_req_t *req)
 {
-    // print uri
     // ESP_LOGI(TAG, "URI: %s", req->uri);
     // verify model uri
     if (httpd_uri_match_wildcard("/v1/models??*", req->uri, strlen(req->uri)))
@@ -160,21 +181,32 @@ static httpd_handle_t start_webserver(void)
     // Start the httpd server
     ESP_LOGI(TAG, "Starting server");
 
-    httpd_ssl_config_t conf = HTTPD_SSL_CONFIG_DEFAULT();
+#ifdef HTTPS_SERVER_ENABLE
+    httpd_ssl_config_t config = HTTPD_SSL_CONFIG_DEFAULT();
+    // config.httpd.lru_purge_enable = true; //Purge “Least Recently Used” connection
 
     extern const unsigned char servercert_start[] asm("_binary_servercert_pem_start");
     extern const unsigned char servercert_end[] asm("_binary_servercert_pem_end");
-    conf.servercert = servercert_start;
-    conf.servercert_len = servercert_end - servercert_start;
+    config.servercert = servercert_start;
+    config.servercert_len = servercert_end - servercert_start;
 
     extern const unsigned char prvtkey_pem_start[] asm("_binary_prvtkey_pem_start");
     extern const unsigned char prvtkey_pem_end[] asm("_binary_prvtkey_pem_end");
-    conf.prvtkey_pem = prvtkey_pem_start;
-    conf.prvtkey_len = prvtkey_pem_end - prvtkey_pem_start;
+    config.prvtkey_pem = prvtkey_pem_start;
+    config.prvtkey_len = prvtkey_pem_end - prvtkey_pem_start;
 
-    conf.httpd.uri_match_fn = httpd_uri_match_wildcard;
+    config.httpd.uri_match_fn = httpd_uri_match_wildcard;
 
-    esp_err_t ret = httpd_ssl_start(&server, &conf);
+    esp_err_t ret = httpd_ssl_start(&server, &config);
+#else
+    httpd_config_t config = HTTPD_DEFAULT_CONFIG();
+    // config.lru_purge_enable = true;//Purge “Least Recently Used” connection
+    config.uri_match_fn = httpd_uri_match_wildcard;
+
+    // Start the httpd server
+    esp_err_t ret = httpd_start(&server, &config);
+#endif
+
     if (ESP_OK != ret)
     {
         ESP_LOGI(TAG, "Error starting server!");
@@ -190,8 +222,13 @@ static httpd_handle_t start_webserver(void)
 
 static esp_err_t stop_webserver(httpd_handle_t server)
 {
+#ifdef HTTPS_SERVER_ENABLE
     // Stop the httpd server
     return httpd_ssl_stop(server);
+#else
+    // Stop the httpd server
+    return httpd_stop(server);
+#endif
 }
 
 static void disconnect_handler(void *arg, esp_event_base_t event_base,
@@ -234,6 +271,9 @@ void app_https_server_start(void)
      */
     ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_AP_STAIPASSIGNED, &connect_handler, &server));
     ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, WIFI_EVENT_AP_STADISCONNECTED, &disconnect_handler, &server));
+
+    /* Start the server for the first time */
+    server = start_webserver();
 
     app_wifi_init_softap();
 }
