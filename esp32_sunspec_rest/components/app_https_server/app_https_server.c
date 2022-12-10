@@ -66,7 +66,7 @@ static esp_err_t get_model(httpd_req_t *req, uint16_t model_id)
                 if (get_model_cjson_points_by_name(root, suns, model_id, csv_points))
                 {
                     my_json_string = cJSON_Print(root);
-                    cJSON_Minify(my_json_string);
+                    //cJSON_Minify(my_json_string);
                     httpd_resp_send(req, my_json_string, HTTPD_RESP_USE_STRLEN);
                     cJSON_Delete(root);
                     free(my_json_string);
@@ -93,7 +93,7 @@ static esp_err_t get_model(httpd_req_t *req, uint16_t model_id)
     if (get_model_cjson_by_id(root, suns, model_id))
     {
         my_json_string = cJSON_Print(root);
-        cJSON_Minify(my_json_string);
+        //cJSON_Minify(my_json_string);
         httpd_resp_send(req, my_json_string, HTTPD_RESP_USE_STRLEN);
         free(my_json_string);
         cJSON_Delete(root);
@@ -139,7 +139,7 @@ static esp_err_t get_models(httpd_req_t *req)
     cJSON *root = cJSON_CreateObject();
     sunspec_to_cjson(root, suns, summary);
     char *my_json_string = cJSON_Print(root);
-    cJSON_Minify(my_json_string);
+    //cJSON_Minify(my_json_string);
 
     httpd_resp_send(req, my_json_string, HTTPD_RESP_USE_STRLEN);
 
@@ -184,7 +184,7 @@ static esp_err_t get_models_router(httpd_req_t *req)
 }
 
 httpd_uri_t uri_get_models = {
-    .uri = "/v1/models/?*", // “?*” to make the previous character optional, and if present, allow anything to follow.
+    .uri = "/?*", // “?*” to make the previous character optional, and if present, allow anything to follow.
     .method = HTTP_GET,
     .handler = get_models_router};
 

@@ -122,8 +122,6 @@ point *create_point(char *name, point_type type, int size);
 group *create_group(char *name, point_type type);
 model *create_model(uint16_t id);
 
-char *allocate_and_fill(char *src);
-
 char *get_point_type_name(point_type);
 char *get_group_type_name(group_type);
 char *get_access_type_name(access_type);

@@ -48,7 +48,7 @@ void app_main(void)
     // char *my_json_string;
     // while (1)
     // {
-    //     point_name_list = allocate_and_fill("TmpAmb,RH,Pres,JKJK");
+    //     asprintf(&point_name_list, "TmpAmb,RH,Pres,JKJK");
     //     root = cJSON_CreateObject();
     //     get_model_cjson_points_by_name(root, suns, 307, point_name_list);
     //     my_json_string = cJSON_Print(root);

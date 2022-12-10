@@ -153,23 +153,12 @@ char *get_static_type_name(static_type t)
     }
 }
 
-char *allocate_and_fill(char *src)
-{
-    if (src != NULL)
-    {
-        char *dest = malloc(strlen(src) + 1); //+1 para o \0
-        strcpy(dest, src);
-        return dest;
-    }
-    return NULL;
-}
-
 // Aloca espaço e preenche os valores padrão
 point *create_point(char *name, point_type type, int size)
 {
     point *p = (point *)calloc(1, sizeof(struct point));
 
-    p->name = allocate_and_fill(name);
+    asprintf(&p->name, name);
     p->_type = type;
     p->get_value = NULL;
     p->set_value = NULL;
@@ -192,7 +181,7 @@ point *create_point(char *name, point_type type, int size)
 group *create_group(char *name, point_type type)
 {
     group *g = (group *)calloc(1, sizeof(struct group));
-    g->name = allocate_and_fill(name);
+    asprintf(&g->name, name);
     g->type = type;
     g->count = 1; //["integer", "string"], "default": 1
     g->points = NULL;

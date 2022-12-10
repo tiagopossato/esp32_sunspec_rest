@@ -67,11 +67,7 @@ esp_err_t basic_auth_handler(httpd_req_t *req)
             return ESP_ERR_NO_MEM;
         }
 
-        if (httpd_req_get_hdr_value_str(req, "Authorization", buf, buf_len) == ESP_OK)
-        {
-            ESP_LOGI(TAG, "Found header => Authorization: %s", buf);
-        }
-        else
+        if (httpd_req_get_hdr_value_str(req, "Authorization", buf, buf_len) != ESP_OK)
         {
             ESP_LOGE(TAG, "No auth value received");
             httpd_resp_set_status(req, HTTPD_401);
@@ -79,6 +75,10 @@ esp_err_t basic_auth_handler(httpd_req_t *req)
             free(buf);
             return ESP_FAIL;
         }
+        // else
+        // {
+        //     ESP_LOGI(TAG, "Found header => Authorization: %s", buf);
+        // }
 
         char *auth_credentials = http_auth_basic(basic_auth_info->username, basic_auth_info->password);
         if (!auth_credentials)
@@ -100,7 +100,7 @@ esp_err_t basic_auth_handler(httpd_req_t *req)
         }
         else
         {
-            ESP_LOGI(TAG, "Authenticated!");
+            // ESP_LOGI(TAG, "Authenticated!");
             free(auth_credentials);
             free(buf);
             return ESP_OK;
