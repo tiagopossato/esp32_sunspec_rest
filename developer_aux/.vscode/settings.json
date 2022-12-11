@@ -1,7 +1,0 @@
-{
-    "files.associations": {
-        "sunspec_models.h": "c",
-        "typeinfo": "c",
-        "type_traits": "c"
-    }
-}
