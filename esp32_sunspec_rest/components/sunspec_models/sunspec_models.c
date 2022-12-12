@@ -198,6 +198,7 @@ model *create_model(uint16_t id)
 {
     model *m = (model *)malloc(sizeof(struct model));
     m->id = id;
+    m->count = 1;
     m->group = NULL;
     m->next = NULL;
 
@@ -377,7 +378,7 @@ void model_to_cjson(cJSON *root, model *m, bool summary)
     {
         cJSON_AddStringToObject(root, "name", m->group->name);
         cJSON_AddNumberToObject(root, "id", m->id);
-        cJSON_AddNumberToObject(root, "count", m->group->count);
+        cJSON_AddNumberToObject(root, "count", m->count); //number of instances of the model
         return;
     }
     // uint16_t id;

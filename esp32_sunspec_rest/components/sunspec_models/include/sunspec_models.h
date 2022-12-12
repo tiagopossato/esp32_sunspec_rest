@@ -105,6 +105,7 @@ typedef struct model
 {
     uint16_t id;
     group *group;
+    uint16_t count; // default 1
     // char *label;
     // char *desc;
     // char *detail;

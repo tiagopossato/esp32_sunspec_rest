@@ -41,7 +41,7 @@ static esp_err_t get_model(httpd_req_t *req, uint16_t model_id)
 
     // set connection close
     httpd_resp_set_hdr(req, "Connection", "close");
-    httpd_resp_set_type(req, "application/json");
+    httpd_resp_set_type(req, "application/json; charset=utf-8");
 
     // TODO: APAGAR DEPOIS
     // SET refresh header
@@ -134,7 +134,7 @@ static esp_err_t get_models(httpd_req_t *req)
     // set connection close
     httpd_resp_set_hdr(req, "Connection", "close");
 
-    httpd_resp_set_type(req, "application/json");
+    httpd_resp_set_type(req, "application/json; charset=utf-8");
     suns = get_sunspec();
     cJSON *root = cJSON_CreateObject();
     sunspec_to_cjson(root, suns, summary);
