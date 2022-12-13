@@ -1,4 +1,3 @@
-
 #include <esp_log.h>
 #include <esp_system.h>
 #include "cJSON.h"
@@ -8,6 +7,7 @@
 #include <esp_http_server.h>
 #include "esp_tls_crypto.h"
 #include "app_https_server.h"
+#include "sunspec_models.h"
 
 #define BASIC_AUTH_USERNAME "admin"
 #define BASIC_AUTH_PASSWORD "admin"
@@ -15,12 +15,21 @@
 
 static const char *TAG = "HTTP AUTH";
 
+// Structure for basic authentication
 typedef struct
 {
     char *username;
     char *password;
 } basic_auth_info_t;
 
+/**
+ * @brief Basic authentication
+ * @param username Username
+ * @param password Password
+ * @return Pointer to the digest
+ *       NULL on failure
+ * @note The caller is responsible for freeing the returned digest
+ */
 static char *http_auth_basic(const char *username, const char *password)
 {
     int out;
@@ -49,7 +58,12 @@ static char *http_auth_basic(const char *username, const char *password)
     return digest;
 }
 
-/* An HTTP GET handler */
+/**
+ * @brief Basic authentication handler
+ * @param req HTTP request
+ * @return ESP_OK on success
+ *        ESP_FAIL on failure
+ */
 esp_err_t basic_auth_handler(httpd_req_t *req)
 {
     char *buf = NULL;
@@ -63,15 +77,36 @@ esp_err_t basic_auth_handler(httpd_req_t *req)
         if (!buf)
         {
             ESP_LOGE(TAG, "No enough memory for basic authorization");
-            httpd_resp_send_500(req);
+
+            httpd_resp_set_type(req, "application/json; charset=utf-8");
+            httpd_resp_set_status(req, HTTPD_500);
+            cJSON *error = cJSON_CreateObject();
+            new_error(error, "AUTH-ERR01",
+                      "UNAUTHORIZED", "No enough memory for basic authorization",
+                      false, NULL);
+            char *my_json_string = cJSON_Print(error);
+            httpd_resp_send(req, my_json_string, HTTPD_RESP_USE_STRLEN);
+            cJSON_Delete(error);
+            free(my_json_string);
+
             return ESP_ERR_NO_MEM;
         }
 
         if (httpd_req_get_hdr_value_str(req, "Authorization", buf, buf_len) != ESP_OK)
         {
             ESP_LOGE(TAG, "No auth value received");
+
+            httpd_resp_set_type(req, "application/json; charset=utf-8");
             httpd_resp_set_status(req, HTTPD_401);
-            httpd_resp_send(req, NULL, 0);
+            cJSON *error = cJSON_CreateObject();
+            new_error(error, "AUTH-ERR02",
+                      "UNAUTHORIZED", "No auth value received",
+                      false, NULL);
+            char *my_json_string = cJSON_Print(error);
+            httpd_resp_send(req, my_json_string, HTTPD_RESP_USE_STRLEN);
+            cJSON_Delete(error);
+            free(my_json_string);
+
             free(buf);
             return ESP_FAIL;
         }
@@ -85,15 +120,36 @@ esp_err_t basic_auth_handler(httpd_req_t *req)
         {
             ESP_LOGE(TAG, "No enough memory for basic authorization credentials");
             free(buf);
-            httpd_resp_send_500(req);
+
+            httpd_resp_set_type(req, "application/json; charset=utf-8");
+            httpd_resp_set_status(req, HTTPD_500);
+            cJSON *error = cJSON_CreateObject();
+            new_error(error, "AUTH-ERR01",
+                      "UNAUTHORIZED", "No enough memory for basic authorization credentials",
+                      false, NULL);
+            char *my_json_string = cJSON_Print(error);
+            httpd_resp_send(req, my_json_string, HTTPD_RESP_USE_STRLEN);
+            cJSON_Delete(error);
+            free(my_json_string);
+
             return ESP_ERR_NO_MEM;
         }
 
         if (strncmp(auth_credentials, buf, buf_len))
         {
             ESP_LOGE(TAG, "Not authenticated");
+
+            httpd_resp_set_type(req, "application/json; charset=utf-8");
             httpd_resp_set_status(req, HTTPD_401);
-            httpd_resp_send(req, NULL, 0);
+            cJSON *error = cJSON_CreateObject();
+            new_error(error, "AUTH-ERR03",
+                      "UNAUTHORIZED", "Not authenticated",
+                      false, NULL);
+            char *my_json_string = cJSON_Print(error);
+            httpd_resp_send(req, my_json_string, HTTPD_RESP_USE_STRLEN);
+            cJSON_Delete(error);
+            free(my_json_string);
+
             free(auth_credentials);
             free(buf);
             return ESP_FAIL;
@@ -111,14 +167,30 @@ esp_err_t basic_auth_handler(httpd_req_t *req)
     else
     {
         ESP_LOGE(TAG, "No auth header received");
-        httpd_resp_set_status(req, HTTPD_401);
-        httpd_resp_send(req, NULL, 0);
+
+            httpd_resp_set_type(req, "application/json; charset=utf-8");
+            httpd_resp_set_status(req, HTTPD_401);
+            cJSON *error = cJSON_CreateObject();
+            new_error(error, "AUTH-ERR03",
+                      "UNAUTHORIZED", "No auth header received",
+                      false, NULL);
+            char *my_json_string = cJSON_Print(error);
+            httpd_resp_send(req, my_json_string, HTTPD_RESP_USE_STRLEN);
+            cJSON_Delete(error);
+            free(my_json_string);
         return ESP_FAIL;
     }
 
     return ESP_FAIL;
 }
 
+/**
+ * @brief Register URI handlers with basic authentication in user context data
+ * @param handle HTTPD server handle
+ * @param uri_handler URI handler
+ * @return ESP_OK on success
+ *        ESP_FAIL on failure
+ */
 esp_err_t httpd_register_uri_handler_with_auth(httpd_handle_t handle,
                                                httpd_uri_t *uri_handler)
 {

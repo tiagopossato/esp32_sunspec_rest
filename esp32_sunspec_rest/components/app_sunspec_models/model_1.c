@@ -57,12 +57,12 @@ bool set_m1_p_device_adress_value(char *value, cJSON *error)
         // bool new_error(cJSON *root, char *errCode,
         //                char *errMessage, char *errReason,
         //                bool debug, char *TBD)
-        char *errMessage;
-        asprintf(&errMessage, "Device address should be between %d and %d.", DEVICE_ADDRESS_MIN, DEVICE_ADDRESS_MAX);
+        char *errReason;
+        asprintf(&errReason, "Device address should be between %d and %d.", DEVICE_ADDRESS_MIN, DEVICE_ADDRESS_MAX);
         new_error(error, "MODEL_1-ERR01",
-                  errMessage, "Value is out of range.",
+                  "Value is out of range.", errReason,
                   false, NULL);
-        free(errMessage);
+        free(errReason);
 
         return false;
     }

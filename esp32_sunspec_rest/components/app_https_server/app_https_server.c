@@ -31,6 +31,13 @@ extern esp_err_t basic_auth_handler(httpd_req_t *req);
 extern esp_err_t httpd_register_uri_handler_with_auth(httpd_handle_t handle,
                                                       httpd_uri_t *uri_handler);
 
+/**
+ * @brief Get model by id
+ * @param req HTTP request
+ * @param model_id Model id
+ * @return ESP_OK on success
+ *       ESP_FAIL on failure
+ */
 static esp_err_t get_model(httpd_req_t *req, uint16_t model_id)
 {
     char *buf;
@@ -42,10 +49,6 @@ static esp_err_t get_model(httpd_req_t *req, uint16_t model_id)
     // set connection close
     httpd_resp_set_hdr(req, "Connection", "close");
     httpd_resp_set_type(req, "application/json; charset=utf-8");
-
-    // TODO: APAGAR DEPOIS
-    // SET refresh header
-    httpd_resp_set_hdr(req, "Refresh", "1");
 
     suns = get_sunspec();
 
@@ -66,7 +69,7 @@ static esp_err_t get_model(httpd_req_t *req, uint16_t model_id)
                 if (get_model_cjson_points_by_name(root, suns, model_id, csv_points))
                 {
                     my_json_string = cJSON_Print(root);
-                    //cJSON_Minify(my_json_string);
+                    // cJSON_Minify(my_json_string);
                     httpd_resp_send(req, my_json_string, HTTPD_RESP_USE_STRLEN);
                     cJSON_Delete(root);
                     free(my_json_string);
@@ -93,7 +96,7 @@ static esp_err_t get_model(httpd_req_t *req, uint16_t model_id)
     if (get_model_cjson_by_id(root, suns, model_id))
     {
         my_json_string = cJSON_Print(root);
-        //cJSON_Minify(my_json_string);
+        // cJSON_Minify(my_json_string);
         httpd_resp_send(req, my_json_string, HTTPD_RESP_USE_STRLEN);
         free(my_json_string);
         cJSON_Delete(root);
@@ -105,8 +108,13 @@ static esp_err_t get_model(httpd_req_t *req, uint16_t model_id)
     return ESP_OK;
 }
 
-/* HTTP GET handler for models*/
-static esp_err_t get_models(httpd_req_t *req)
+/**
+ * @brief Get models
+ * @param req HTTP request
+ * @return ESP_OK on success
+ *      ESP_FAIL on failure
+ */
+static esp_err_t get_all_models(httpd_req_t *req)
 {
     char *buf;
     size_t buf_len;
@@ -139,7 +147,7 @@ static esp_err_t get_models(httpd_req_t *req)
     cJSON *root = cJSON_CreateObject();
     sunspec_to_cjson(root, suns, summary);
     char *my_json_string = cJSON_Print(root);
-    //cJSON_Minify(my_json_string);
+    // cJSON_Minify(my_json_string);
 
     httpd_resp_send(req, my_json_string, HTTPD_RESP_USE_STRLEN);
 
@@ -152,8 +160,7 @@ static esp_err_t get_models(httpd_req_t *req)
 /*  HTTP GET router for models*/
 static esp_err_t get_models_router(httpd_req_t *req)
 {
-    esp_err_t auth = basic_auth_handler(req);
-    if (auth != ESP_OK)
+    if (basic_auth_handler(req) != ESP_OK)
     {
         // Caso a autenticação falhar, a requisição será preenchida com o código de erro
         //  esta função deve retornar OK para que o servidor envie a resposta de erro
@@ -165,7 +172,7 @@ static esp_err_t get_models_router(httpd_req_t *req)
     // verify model uri
     if (httpd_uri_match_wildcard("/v1/models??*", req->uri, strlen(req->uri)))
     {
-        return get_models(req);
+        return get_all_models(req);
     }
 
     if (httpd_uri_match_wildcard("/v1/models/1/instances/0??*", req->uri, strlen(req->uri)))
@@ -176,16 +183,25 @@ static esp_err_t get_models_router(httpd_req_t *req)
     {
         return get_model(req, 307);
     }
-    if (httpd_uri_match_wildcard("/v1/models/65500/instances/0??*", req->uri, strlen(req->uri)))
-    {
-        return get_model(req, 65500);
-    }
 
-    httpd_resp_send_404(req);
+    httpd_resp_set_type(req, "application/json; charset=utf-8");
+    httpd_resp_set_status(req, HTTPD_404);
+
+    cJSON *error = cJSON_CreateObject();
+    new_error(error, "ERR01",
+              "URI no match", "URI no match",
+              false, NULL);
+    char *my_json_string = cJSON_Print(error);
+    httpd_resp_send(req, my_json_string, HTTPD_RESP_USE_STRLEN);
+
+    cJSON_Delete(error);
+    free(my_json_string);
 
     return ESP_OK;
 }
 
+// Única URI registrada no servidor
+// Desta forma todas as requisições devem passar pela função de roteamento, responsável pela autenticação
 httpd_uri_t uri_get_models = {
     .uri = "/?*", // “?*” to make the previous character optional, and if present, allow anything to follow.
     .method = HTTP_GET,
