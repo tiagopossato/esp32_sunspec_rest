@@ -172,10 +172,13 @@ static esp_err_t get_models_router(httpd_req_t *req)
     {
         return get_model(req, 1);
     }
-    // verify model uri
     if (httpd_uri_match_wildcard("/v1/models/307/instances/0??*", req->uri, strlen(req->uri)))
     {
         return get_model(req, 307);
+    }
+    if (httpd_uri_match_wildcard("/v1/models/65500/instances/0??*", req->uri, strlen(req->uri)))
+    {
+        return get_model(req, 65500);
     }
 
     httpd_resp_send_404(req);

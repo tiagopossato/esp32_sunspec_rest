@@ -17,6 +17,7 @@ static const char *TAG = "main";
 SunSpec *suns;
 model *model_1;
 model *model_307;
+model *model_65500;
 
 void app_main(void)
 {
@@ -25,9 +26,11 @@ void app_main(void)
     // inicializa os modelos
     model_1 = init_model_1();
     model_307 = init_model_307();
+    model_65500 = init_model_65500();
     // adiciona os modelos a lista de modelos
     add_model(suns, model_1);
     add_model(suns, model_307);
+    add_model(suns, model_65500);
 
     // inicializa os sensores
     bmp280_begin();
@@ -41,6 +44,115 @@ void app_main(void)
         ESP_LOGI(TAG, "Minimum free heap: %ld", esp_get_minimum_free_heap_size());
         vTaskDelay(2000 / portTICK_PERIOD_MS);
     }
+
+    // teste de escrita
+
+    // cJSON *root;
+    // char *my_json_string;
+    // char *point_name_list;
+
+    // point *test_point = model_65500->group->points->next->next; //compressor
+    // root = cJSON_CreateObject();
+    // if (false == test_point->set_value("1", root))
+    // {
+    //     my_json_string = cJSON_Print(root);
+    //     cJSON_Minify(my_json_string);
+    //     printf("%s\n", my_json_string);
+    // }
+    // else
+    // {
+    //     printf("valor alterado com sucesso\n");
+    //     asprintf(&point_name_list, "Comp,SetPt,Hist,OpMode");
+    //     get_model_cjson_points_by_name(root, suns, 65500, point_name_list);
+    //     my_json_string = cJSON_Print(root);
+    //     cJSON_Minify(my_json_string);
+    //     printf("%s\n", my_json_string);
+    //     free(point_name_list);
+    // }
+
+    // test_point = model_65500->group->points->next->next->next->next->next; // modo de operação
+    // root = cJSON_CreateObject();
+    // if (false == test_point->set_value("1", root))
+    // {
+    //     my_json_string = cJSON_Print(root);
+    //     cJSON_Minify(my_json_string);
+    //     printf("%s\n", my_json_string);
+    // }
+    // else
+    // {
+    //     printf("valor alterado com sucesso\n");
+    //     asprintf(&point_name_list, "Comp,SetPt,Hist,OpMode");
+    //     get_model_cjson_points_by_name(root, suns, 65500, point_name_list);
+    //     my_json_string = cJSON_Print(root);
+    //     cJSON_Minify(my_json_string);
+    //     printf("%s\n", my_json_string);
+    //     free(point_name_list);
+    // }
+
+    // test_point = model_65500->group->points->next->next; //compressor
+    // root = cJSON_CreateObject();
+    // if (false == test_point->set_value("0", root))
+    // {
+    //     my_json_string = cJSON_Print(root);
+    //     cJSON_Minify(my_json_string);
+    //     printf("%s\n", my_json_string);
+    // }
+    // else
+    // {
+    //     printf("valor alterado com sucesso\n");
+    //     asprintf(&point_name_list, "Comp,SetPt,Hist,OpMode");
+    //     get_model_cjson_points_by_name(root, suns, 65500, point_name_list);
+    //     my_json_string = cJSON_Print(root);
+    //     cJSON_Minify(my_json_string);
+    //     printf("%s\n", my_json_string);
+    //     free(point_name_list);
+    // }
+
+    // test_point = model_65500->group->points->next->next->next->next->next; // modo de operação
+    // root = cJSON_CreateObject();
+    // if (false == test_point->set_value("0", root))
+    // {
+    //     my_json_string = cJSON_Print(root);
+    //     cJSON_Minify(my_json_string);
+    //     printf("%s\n", my_json_string);
+    // }
+    // else
+    // {
+    //     printf("valor alterado com sucesso\n");
+    //     asprintf(&point_name_list, "Comp,SetPt,Hist,OpMode");
+    //     get_model_cjson_points_by_name(root, suns, 65500, point_name_list);
+    //     my_json_string = cJSON_Print(root);
+    //     cJSON_Minify(my_json_string);
+    //     printf("%s\n", my_json_string);
+    //     free(point_name_list);
+    // }
+
+    // test_point = model_65500->group->points->next->next; //compressor
+    // root = cJSON_CreateObject();
+    // if (false == test_point->set_value("0", root))
+    // {
+    //     my_json_string = cJSON_Print(root);
+    //     cJSON_Minify(my_json_string);
+    //     printf("%s\n", my_json_string);
+    // }
+    // else
+    // {
+    //     printf("valor alterado com sucesso\n");
+    //     asprintf(&point_name_list, "Comp,SetPt,Hist,OpMode");
+    //     get_model_cjson_points_by_name(root, suns, 65500, point_name_list);
+    //     my_json_string = cJSON_Print(root);
+    //     cJSON_Minify(my_json_string);
+    //     printf("%s\n", my_json_string);
+    //     free(point_name_list);
+    // }
+
+    // cJSON_Delete(root);
+    // free(my_json_string);
+
+    // while (1)
+    // {
+    //     vTaskDelay(2000 / portTICK_PERIOD_MS);
+    // }
 
     // imprime o temperatura, umidade e pressao do modelo 307 a cada 5 segundos
     // char *point_name_list;

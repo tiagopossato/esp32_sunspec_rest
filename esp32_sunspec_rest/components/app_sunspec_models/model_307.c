@@ -190,7 +190,7 @@ model *init_model_307()
     model_id->get_value = get_m307_p_id_value;
     model_id->next = md_length;
 
-    m307->group->count = 13;
+    m307->group->count = 5;
 
     // associa o primeiro ponto ao ponto id
     m307->group->points = model_id;

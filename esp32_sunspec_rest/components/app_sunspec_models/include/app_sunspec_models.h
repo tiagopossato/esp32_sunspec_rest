@@ -5,4 +5,5 @@
 
 model * init_model_1();
 model * init_model_307();
+model * init_model_65500();
 #endif

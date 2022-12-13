@@ -1,0 +1,70 @@
+{
+    "group": {
+        "desc": "Refrigerator Model",
+        "label": "Refrigerator",
+        "name": "refrigerator",
+        "points": [
+            {
+                "desc": "Model identifier",
+                "label": "Model ID",
+                "mandatory": "M",
+                "name": "ID",
+                "size": 1,
+                "static": "S",
+                "type": "uint16",
+                "value": 65500
+            },
+            {
+                "desc": "Model length",
+                "label": "Model Length",
+                "mandatory": "M",
+                "name": "L",
+                "size": 1,
+                "static": "S",
+                "type": "uint16"
+            },
+            {
+                "desc": "Compressor output",
+                "label": "Compressor",
+                "access": "RW",
+                "mandatory": "M",
+                "name": "Comp",
+                "size": 1,
+                "type": "uint16"
+            },
+            {
+                "desc": "Temperature SetPoint",
+                "label": "SetPoint",
+                "access": "RW",
+                "mandatory": "M",
+                "name": "SetPt",
+                "sf": -1,
+                "size": 1,
+                "type": "int16",
+                "units": "C"
+            },
+            {
+                "desc": "Temperature Histeresis",
+                "label": "Histeresis",
+                "access": "RW",
+                "mandatory": "M",
+                "name": "Hist",
+                "sf": -1,
+                "size": 1,
+                "type": "int16",
+                "units": "C"
+            },
+            {
+                "desc": "Operational mode",
+                "label": "Operational mode",
+                "access": "RW",
+                "mandatory": "M",
+                "name": "OpMode",
+                "size": 1,
+                "type": "uint16"
+            }
+        ],
+        "type": "group"
+    },
+    "id": 65500
+}

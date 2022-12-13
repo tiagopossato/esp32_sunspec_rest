@@ -68,7 +68,7 @@ typedef struct point
     char *name;
     point_type _type;
     char *(*get_value)();      //"type": ["integer", "string"]
-    void (*set_value)(char *); //"type": ["integer", "string"]
+    bool (*set_value)(char *value, cJSON *error); //"type": ["integer", "string"]
     int count;
     int size;
     int sf; // "type": ["integer", "string"], "minimum": -10, "maximum": 10
@@ -154,3 +154,18 @@ SunSpec *init_sunspec();
 SunSpec *get_sunspec();
 
 void add_model(SunSpec *sunspec, model *m);
+
+/**
+ * @brief Create a new error message
+ * @param root cJSON root object
+ * @param errCode Error code that can be used programmatically
+ * @param errMessage Concise error message suitable for display.
+ * @param errReason Detailed error information describing the cause of the error in addition to the
+HTTP status code cause.
+ * @param debug Very detailed debug information.
+ * @param TBD TBD If debug is true, this field is required. Possibly add request information such as target resource, target values, and
+HTTP method.
+ */
+bool new_error(cJSON *root, char *errCode,
+               char *errMessage, char *errReason,
+               bool debug, char *TBD);

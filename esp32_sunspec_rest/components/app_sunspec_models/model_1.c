@@ -12,6 +12,9 @@ static model *m1;
 /**********************************************************/
 /*********** FUNÇÕES ESPECÍFICAS DO MODELO 01 *************/
 /**********************************************************/
+#define DEVICE_ADDRESS_MIN 1
+#define DEVICE_ADDRESS_MAX 255
+
 uint16_t device_address;
 
 char *get_m1_p_id_value()
@@ -43,9 +46,28 @@ char *get_m1_p_serial_number_value()
 }
 
 // recebe uma string contendo o valor e converte para um inteiro sem sinal.
-void set_m1_p_device_adress_value(char *value)
+bool set_m1_p_device_adress_value(char *value, cJSON *error)
 {
-    device_address = (uint16_t)strtoul(value, NULL, 10);
+    // converte o valor recebido em uint16_t
+    uint16_t tmp = (uint16_t)strtoul(value, NULL, 10);
+
+    // verifica se está dentro dos limites
+    if (tmp < DEVICE_ADDRESS_MIN || tmp > DEVICE_ADDRESS_MAX)
+    {
+        // bool new_error(cJSON *root, char *errCode,
+        //                char *errMessage, char *errReason,
+        //                bool debug, char *TBD)
+        char *errMessage;
+        asprintf(&errMessage, "Device address should be between %d and %d.", DEVICE_ADDRESS_MIN, DEVICE_ADDRESS_MAX);
+        new_error(error, "MODEL_1-ERR01",
+                  errMessage, "Value is out of range.",
+                  false, NULL);
+        free(errMessage);
+
+        return false;
+    }
+    device_address = tmp;
+    return true;
 }
 
 char *get_m1_p_version_value()
@@ -97,7 +119,7 @@ model *init_model_1()
     device_addres->get_value = get_m1_p_device_adress_value;
     device_addres->set_value = set_m1_p_device_adress_value;
     device_addres->next = pad; // TODO: apontar para o ponto correto
-    set_m1_p_device_adress_value("1");
+    (void)set_m1_p_device_adress_value("1", NULL);
 
     point *serial_number = create_point("SN", pt_string, 16);
     asprintf(&serial_number->desc, "Manufacturer specific value (32 chars)");

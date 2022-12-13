@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "app_https_server.h"
+#include "sunspec_models.h"
 
 bool new_error(cJSON *root, char *errCode,
                char *errMessage, char *errReason,

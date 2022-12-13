@@ -35,9 +35,15 @@
         "sdkconfig.h": "c",
         "http_parser.h": "c",
         "esp_netif.h": "c",
-        "esp_tls_crypto.h": "c"
+        "esp_tls_crypto.h": "c",
+        "*.tcc": "c",
+        "ratio": "c",
+        "system_error": "c",
+        "functional": "c",
+        "tuple": "c",
+        "type_traits": "c"
     },
     "idf.flashType": "UART",
-    "idf.port": "/dev/ttyUSB0",
+    "idf.port": "/dev/ttyUSB1",
     "cmake.configureOnOpen": true
 }
