@@ -11,8 +11,6 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, Integer, JSON, DateTime, String
 
-
-# DB_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'monitor.db')
 DB_PATH = "/opt/suns_monitor/db/suns_monitor.db"
 
 Base = declarative_base()
@@ -45,6 +43,6 @@ def save_data(model, instance, point, value, timestamp, session):
             timestamp = timestamp)
         session.add(data)
         session.commit()
-        # print(data)
+        print(data)
     except Exception as e:
         print(f'save_data error: {e}')

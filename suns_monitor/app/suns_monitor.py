@@ -29,14 +29,13 @@ if __name__ == '__main__':
             print(f"Request time: {request_time:.4}s, avg: {avg:.4}s, count: {count}")
             print(r.status_code)
 
-            resposta = r.json()
-
-            print(resposta)
-
-            save_data(model=307, instance=0, point="TmpAmb", value=resposta['models'][0]['TmpAmb'], timestamp=time(), session=session)
-            save_data(model=307, instance=0, point="RH", value=resposta['models'][0]['RH'], timestamp=time(), session=session)
-            save_data(model=307, instance=0, point="Pres", value=resposta['models'][0]['Pres'], timestamp=time(), session=session)
-
+            resposta = r.json()['models'][0]
+            
+            # iterate over json keys and save data
+            for key in resposta:
+                # ignore name and id
+                if key != 'name' and key != 'id':
+                    save_data(model=307, instance=0, point=key, value=resposta[key], timestamp=time(), session=session)
             try:
                 sleep(interval-(end_time - init_time).total_seconds())
             except:
