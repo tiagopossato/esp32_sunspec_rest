@@ -1,16 +1,17 @@
 - /models/{modelId}/instances/{index}
-  - em alfa
+  - em beta
 
 - /models/{modelId}/instances/{index}?points
-  - em alfa
+  - em beta
 
 - PATCH
 
 - Autenticação
-  - em alfa
+  - em beta
 
 - Mensagens de erro
- - em alfa
+ - em beta
+ - Criar padronização dos códigos e mensagens de erro
 
 - Substituir a função allocate_and_fill pela função padrão asprintf https://man7.org/linux/man-pages/man3/asprintf.3.html
   - alterado

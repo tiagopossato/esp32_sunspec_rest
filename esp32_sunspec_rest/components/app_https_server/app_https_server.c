@@ -31,6 +31,9 @@ extern esp_err_t basic_auth_handler(httpd_req_t *req);
 extern esp_err_t httpd_register_uri_handler_with_auth(httpd_handle_t handle,
                                                       httpd_uri_t *uri_handler);
 
+extern void http_send_error(httpd_req_t *req, const char *http_status,
+                            char *errCode, char *errMessage, char *errReason,
+                            bool debug, char *TBD);
 /**
  * @brief Get model by id
  * @param req HTTP request
@@ -49,6 +52,10 @@ static esp_err_t get_model(httpd_req_t *req, uint16_t model_id)
     // set connection close
     httpd_resp_set_hdr(req, "Connection", "close");
     httpd_resp_set_type(req, "application/json; charset=utf-8");
+
+    // set refresh  header
+    // TODO: Remove this in production
+    httpd_resp_set_hdr(req, "Refresh", "5");
 
     suns = get_sunspec();
 
@@ -79,7 +86,13 @@ static esp_err_t get_model(httpd_req_t *req, uint16_t model_id)
                 }
                 else
                 {
-                    httpd_resp_send_404(req);
+                    // Envia erro de modelo não encontrado
+                    char *errReason;
+                    asprintf(&errReason, "Model %u not found.", model_id);
+                    http_send_error(req, HTTPD_404, "MODEL-ERR01",
+                                    "Model not found.", errReason,
+                                    false, NULL);
+                    free(errReason);
                     cJSON_Delete(root);
                     free(csv_points);
                     free(buf);
@@ -103,7 +116,13 @@ static esp_err_t get_model(httpd_req_t *req, uint16_t model_id)
         return ESP_OK;
     }
 
-    httpd_resp_send_404(req);
+    // Envia erro de modelo não encontrado
+    char *errReason;
+    asprintf(&errReason, "Model %u not found.", model_id);
+    http_send_error(req, HTTPD_404, "MODEL-ERR01",
+                    "Model not found.", errReason,
+                    false, NULL);
+    free(errReason);
     cJSON_Delete(root);
     return ESP_OK;
 }
@@ -141,7 +160,6 @@ static esp_err_t get_all_models(httpd_req_t *req)
 
     // set connection close
     httpd_resp_set_hdr(req, "Connection", "close");
-
     httpd_resp_set_type(req, "application/json; charset=utf-8");
     suns = get_sunspec();
     cJSON *root = cJSON_CreateObject();
@@ -157,8 +175,14 @@ static esp_err_t get_all_models(httpd_req_t *req)
     return ESP_OK;
 }
 
-/*  HTTP GET router for models*/
-static esp_err_t get_models_router(httpd_req_t *req)
+/**
+ * @brief Get router. This is a protected resource that handles every request
+ * using HTTP GET method.
+ * @param req HTTP request
+ * @return ESP_OK on success
+ *      ESP_FAIL on failure
+ */
+static esp_err_t get_router(httpd_req_t *req)
 {
     if (basic_auth_handler(req) != ESP_OK)
     {
@@ -186,26 +210,25 @@ static esp_err_t get_models_router(httpd_req_t *req)
 
     httpd_resp_set_type(req, "application/json; charset=utf-8");
     httpd_resp_set_status(req, HTTPD_404);
-
     cJSON *error = cJSON_CreateObject();
     new_error(error, "ERR01",
               "URI no match", "URI no match",
               false, NULL);
     char *my_json_string = cJSON_Print(error);
     httpd_resp_send(req, my_json_string, HTTPD_RESP_USE_STRLEN);
-
     cJSON_Delete(error);
     free(my_json_string);
 
     return ESP_OK;
 }
 
-// Única URI registrada no servidor
-// Desta forma todas as requisições devem passar pela função de roteamento, responsável pela autenticação
+// Única URI registrada no servidor para o verbo GET
+// Desta forma todas as requisições devem passar pela função de roteamento,
+// responsável pela autenticação e despacho das requisições
 httpd_uri_t uri_get_models = {
     .uri = "/?*", // “?*” to make the previous character optional, and if present, allow anything to follow.
     .method = HTTP_GET,
-    .handler = get_models_router};
+    .handler = get_router};
 
 static httpd_handle_t start_webserver(void)
 {

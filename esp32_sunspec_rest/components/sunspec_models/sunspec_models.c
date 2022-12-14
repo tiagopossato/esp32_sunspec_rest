@@ -7,6 +7,8 @@
 
 #include "sunspec_models.h"
 
+static const char *TAG = "sunspec_models";
+
 static SunSpec *sunspec;
 
 void get_points_by_name(cJSON *root, model *m, char *point_name_csv);
@@ -378,7 +380,7 @@ void model_to_cjson(cJSON *root, model *m, bool summary)
     {
         cJSON_AddStringToObject(root, "name", m->group->name);
         cJSON_AddNumberToObject(root, "id", m->id);
-        cJSON_AddNumberToObject(root, "count", m->count); //number of instances of the model
+        cJSON_AddNumberToObject(root, "count", m->count); // number of instances of the model
         return;
     }
     // uint16_t id;
@@ -503,11 +505,13 @@ bool get_model_cjson_points_by_name(cJSON *root, SunSpec *suns, uint16_t model_i
 {
     if (root == NULL)
     {
+        ESP_LOGE(TAG, "cJSON *root is NULL");
         return false;
     }
     model *m = suns->first;
     if (m == NULL)
     {
+        ESP_LOGE(TAG, "first suns is NULL");
         return false;
     }
     cJSON *models = cJSON_AddArrayToObject(root, "models");
@@ -526,5 +530,6 @@ bool get_model_cjson_points_by_name(cJSON *root, SunSpec *suns, uint16_t model_i
         }
         m = m->next;
     }
+    ESP_LOGE(TAG, "model_id %d not found", model_id);
     return false;
 }

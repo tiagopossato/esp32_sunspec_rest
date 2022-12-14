@@ -44,6 +44,6 @@
         "type_traits": "c"
     },
     "idf.flashType": "UART",
-    "idf.port": "/dev/ttyUSB1",
+    "idf.port": "/dev/ttyUSB0",
     "cmake.configureOnOpen": true
 }
