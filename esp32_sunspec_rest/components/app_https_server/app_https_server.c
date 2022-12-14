@@ -325,7 +325,7 @@ static esp_err_t patch_router(httpd_req_t *req)
 
         cJSON *error_response = cJSON_CreateObject();
         suns = get_sunspec();
-        if (false == validate_and_patch_points(array_points, suns, 1, error_response))
+        if (false == patch_points(array_points, suns, 1, error_response))
         {
             // print error
             char *my_json_string = cJSON_Print(error_response);

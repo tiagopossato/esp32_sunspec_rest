@@ -546,7 +546,7 @@ bool get_model_cjson_points_by_name(cJSON *root, SunSpec *suns, uint16_t model_i
  *  se o modelo não tem pontos atualizáveis ou,
  *  se algum valor a ser atualizado em algum ponto não é válido
  */
-bool validate_and_patch_points(cJSON *points, SunSpec *suns, uint16_t model_id, cJSON *error_response)
+bool validate_patch_points(cJSON *points, SunSpec *suns, uint16_t model_id, cJSON *error_response)
 {
     if (points == NULL)
     {
@@ -629,12 +629,9 @@ bool validate_and_patch_points(cJSON *points, SunSpec *suns, uint16_t model_id, 
         return false;
     }
 
-    quebrar a função em duas, fazer uma cópia antes de validar e chamar o com a cópia
-
-    
-        // verifica se os pontos recebidos são os mesmos que os pontos editáveis
-        // e valida os valores enviados
-        for (uint16_t i = 0; i < patchable_points_size; i++)
+    // verifica se os pontos recebidos são os mesmos que os pontos editáveis
+    // e valida os valores enviados
+    for (uint16_t i = 0; i < patchable_points_size; i++)
     {
         cJSON *patchable_point = cJSON_GetArrayItem(patchable_points, i);
 
@@ -666,23 +663,22 @@ bool validate_and_patch_points(cJSON *points, SunSpec *suns, uint16_t model_id, 
             free(errReason);
             free(patchable_points_string);
             cJSON_Delete(patchable_point);
-            cJSON_Delete(input_points_copy);
             return false;
         }
         // o ponto foi encontrado, então verifica se o valor é válido
 
-        char *pt_value;
+        // char *pt_value;
 
-        if (cJSON_IsString(input_point))
-        {
-            ESP_LOGI(TAG, "input_point cJSON_IsString");
-            pt_value = cJSON_GetStringValue(input_point);
-        }
-        else
-        {
-            pt_value = cJSON_Print(input_point);
-        }
-        ESP_LOGI(TAG, " input_point pt_value: %s", pt_value);
+        // if (cJSON_IsString(input_point))
+        // {
+        //     // ESP_LOGI(TAG, "input_point cJSON_IsString");
+        //     pt_value = cJSON_GetStringValue(input_point);
+        // }
+        // else
+        // {
+        //     pt_value = cJSON_Print(input_point);
+        // }
+        // ESP_LOGI(TAG, " input_point pt_value: %s", pt_value);
 
         // verifica se o valor é válido
         // pega o primeiro ponto do modelo para verificar se o valor é válido
@@ -697,6 +693,18 @@ bool validate_and_patch_points(cJSON *points, SunSpec *suns, uint16_t model_id, 
                     ESP_LOGI(TAG, "input_point pt_value: %s está vazio e não será alterado", patchable_point->child->string);
                     break;
                 }
+                char *pt_value;
+
+                if (cJSON_IsString(input_point))
+                {
+                    // ESP_LOGI(TAG, "input_point cJSON_IsString");
+                    pt_value = cJSON_GetStringValue(input_point);
+                }
+                else
+                {
+                    pt_value = cJSON_Print(input_point);
+                }
+                ESP_LOGI(TAG, " input_point pt_value: %s", pt_value);
                 // chama a função de validação do ponto
                 if (point_to_patch->validate_set_value(pt_value, error_response) == false)
                 {
@@ -705,16 +713,14 @@ bool validate_and_patch_points(cJSON *points, SunSpec *suns, uint16_t model_id, 
                     free(patchable_points_string);
                     free(pt_value);
                     cJSON_Delete(patchable_point);
-                    cJSON_Delete(input_points_copy);
                     return false;
                 }
+                free(pt_value);
                 // para a busca pois já encontrou
                 break;
             }
             point_to_patch = point_to_patch->next;
         }
-
-        free(pt_value);
 
         if (point_to_patch == NULL)
         {
@@ -728,76 +734,186 @@ bool validate_and_patch_points(cJSON *points, SunSpec *suns, uint16_t model_id, 
             free(errReason);
             free(patchable_points_string);
             cJSON_Delete(patchable_point);
-            cJSON_Delete(input_points_copy);
             return false;
         }
     }
     // O PATCH foi validado com sucesso
     ESP_LOGI(TAG, "PATCH validado com sucesso");
-
-    for (uint16_t i = 0; i < patchable_points_size; i++)
-    {
-        cJSON *patchable_point = cJSON_GetArrayItem(patchable_points, i);
-
-        ESP_LOGI(TAG, "alterando input_point: %s", patchable_point->child->string);
-        cJSON *input_point = NULL;
-
-        // itera sobre os pontos recebidos para pegar o ponto a ser alterado
-        for (uint16_t j = 0; j < patchable_points_size; j++)
-        {
-            cJSON *ip = cJSON_GetArrayItem(input_points_copy, j);
-            input_point = cJSON_GetObjectItemCaseSensitive(ip, patchable_point->child->string);
-            // cJSON_Delete(ip);
-            if (input_point != NULL)
-            {
-                ESP_LOGI(TAG, "input_point %s NÃO encontrado", patchable_point->child->string);
-                break;
-            }
-        }
-
-        char *pt_value = cJSON_Print(input_point);
-        if (cJSON_IsString(input_point))
-        {
-            pt_value = cJSON_GetStringValue(input_point);
-            ESP_LOGI(TAG, "input_point cJSON_IsString");
-        }
-        // else
-        // {
-        //     pt_value = cJSON_Print(input_point);
-        // }
-        ESP_LOGI(TAG, "input_point pt_value: %s", pt_value);
-
-        // pega o primeiro ponto do modelo para alterar o valor
-        point_to_patch = model_to_patch->group->points;
-        while (point_to_patch != NULL)
-        {
-            // compara o nome do ponto atual com o nome do ponto a ser alterado
-            if (strcmp(point_to_patch->name, patchable_point->child->string) == 0)
-            {
-                if (cJSON_IsObject(input_point))
-                {
-                    ESP_LOGI(TAG, "input_point pt_value: %s está vazio e não será alterado", patchable_point->child->string);
-                    break;
-                }
-                // chama a função que altera o valor do ponto
-                if (point_to_patch->set_value(pt_value, error_response) == false)
-                {
-                    // se a função retornar false, então o valor é inválido
-                    // e a mensagem de erro já foi preenchida em error_response
-                    free(patchable_points_string);
-                    free(pt_value);
-                    cJSON_Delete(patchable_point);
-                    return false;
-                }
-                // para a busca pois já encontrou
-                break;
-            }
-            point_to_patch = point_to_patch->next;
-        }
-        free(pt_value);
-    }
-
     free(patchable_points_string);
 
     return true;
 }
+
+bool patch_points(cJSON *points, SunSpec *suns, uint16_t model_id, cJSON *error_response)
+{
+    // validação básica dos parâmetros
+    if (points == NULL)
+    {
+        ESP_LOGE(TAG, "cJSON *points is NULL");
+        return false;
+    }
+    if (error_response == NULL)
+    {
+        ESP_LOGE(TAG, "cJSON *error_response is NULL");
+        return false;
+    }
+
+    if (suns == NULL)
+    {
+        ESP_LOGE(TAG, "suns is NULL");
+        return false;
+    }
+
+    // copia os pontos recebidos para um novo objeto
+    // pois o objeto original será alterado
+    cJSON *input_points = cJSON_Duplicate(points, true);
+    if (input_points == NULL)
+    {
+        ESP_LOGE(TAG, "cJSON_Duplicate failed");
+        return false;
+    }
+
+    // valida o PATCH conforme as regras da especificação do SunSpec
+    if (validate_patch_points(input_points, suns, model_id, error_response) == false)
+    {
+        return false;
+    }
+
+    model *model_to_patch = suns->first;
+    if (model_to_patch == NULL)
+    {
+        ESP_LOGE(TAG, "first suns is NULL");
+        return false;
+    }
+
+    // busca o modelo pelo model_id
+    while (model_to_patch != NULL)
+    {
+        if (model_to_patch->id == model_id)
+        {
+            break;
+        }
+        model_to_patch = model_to_patch->next;
+    }
+    // verifica se encontrou um modelo
+    if (model_to_patch == NULL)
+    {
+        ESP_LOGE(TAG, "model_id %d not found", model_id);
+        return false;
+    }
+
+    // iterate over the points to patch and call the set_value function
+    // remember that values are validated
+    for (uint16_t i = 0; i < cJSON_GetArraySize(points); i++)
+    {
+        // take first point from input_points
+        cJSON *json_input_point = cJSON_GetArrayItem(points, i);
+
+        // take first point from model_to_patch
+        point *point_to_patch = model_to_patch->group->points;
+        // iterate over the points of the model
+        while (point_to_patch != NULL)
+        {
+            // compare the name of the current point with the name of the point to be patched
+            if (strcmp(json_input_point->child->string, point_to_patch->name) == 0)
+            {
+                cJSON *input_point = cJSON_GetObjectItemCaseSensitive(json_input_point, point_to_patch->name);
+                // verify if the point is a object
+                if (cJSON_IsObject(input_point))
+                {
+                    ESP_LOGI(TAG, "input_point pt_value: %s está vazio e não será alterado",
+                             point_to_patch->name);
+                    break;
+                }
+
+                char *pt_value;
+
+                if (cJSON_IsString(input_point))
+                {
+                    pt_value = cJSON_GetStringValue(input_point);
+                }
+                else
+                {
+                    pt_value = cJSON_Print(input_point);
+                }
+                ESP_LOGI(TAG, "input_point pt_value: %s", pt_value);
+
+                // call the set_value function
+                point_to_patch->set_value(pt_value, error_response);
+                // stop the search because it already found
+                break;
+            }
+            point_to_patch = point_to_patch->next;
+        }
+    }
+    return true;
+}
+
+// void nada()
+// {
+//     for (uint16_t i = 0; i < patchable_points_size; i++)
+//     {
+//         cJSON *patchable_point = cJSON_GetArrayItem(patchable_points, i);
+
+//         ESP_LOGI(TAG, "alterando input_point: %s", patchable_point->child->string);
+//         cJSON *input_point = NULL;
+
+//         // itera sobre os pontos recebidos para pegar o ponto a ser alterado
+//         for (uint16_t j = 0; j < patchable_points_size; j++)
+//         {
+//             cJSON *ip = cJSON_GetArrayItem(input_points_copy, j);
+//             input_point = cJSON_GetObjectItemCaseSensitive(ip, patchable_point->child->string);
+//             // cJSON_Delete(ip);
+//             if (input_point != NULL)
+//             {
+//                 ESP_LOGI(TAG, "input_point %s NÃO encontrado", patchable_point->child->string);
+//                 break;
+//             }
+//         }
+
+//         char *pt_value = cJSON_Print(input_point);
+//         if (cJSON_IsString(input_point))
+//         {
+//             pt_value = cJSON_GetStringValue(input_point);
+//             ESP_LOGI(TAG, "input_point cJSON_IsString");
+//         }
+//         // else
+//         // {
+//         //     pt_value = cJSON_Print(input_point);
+//         // }
+//         ESP_LOGI(TAG, "input_point pt_value: %s", pt_value);
+
+//         // pega o primeiro ponto do modelo para alterar o valor
+//         point_to_patch = model_to_patch->group->points;
+//         while (point_to_patch != NULL)
+//         {
+//             // compara o nome do ponto atual com o nome do ponto a ser alterado
+//             if (strcmp(point_to_patch->name, patchable_point->child->string) == 0)
+//             {
+//                 if (cJSON_IsObject(input_point))
+//                 {
+//                     ESP_LOGI(TAG, "input_point pt_value: %s está vazio e não será alterado", patchable_point->child->string);
+//                     break;
+//                 }
+//                 // chama a função que altera o valor do ponto
+//                 if (point_to_patch->set_value(pt_value, error_response) == false)
+//                 {
+//                     // se a função retornar false, então o valor é inválido
+//                     // e a mensagem de erro já foi preenchida em error_response
+//                     free(patchable_points_string);
+//                     free(pt_value);
+//                     cJSON_Delete(patchable_point);
+//                     return false;
+//                 }
+//                 // para a busca pois já encontrou
+//                 break;
+//             }
+//             point_to_patch = point_to_patch->next;
+//         }
+//         free(pt_value);
+//     }
+
+//     free(patchable_points_string);
+
+//     return true;
+// }

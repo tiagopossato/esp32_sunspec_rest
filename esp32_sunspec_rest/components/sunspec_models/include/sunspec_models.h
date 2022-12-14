@@ -184,4 +184,6 @@ bool new_error(cJSON *root, char *errCode,
  *  se o modelo não tem pontos atualizáveis ou,
  *  se algum valor a ser atualizado em algum ponto não é válido
  */
-bool validate_and_patch_points(cJSON *points, SunSpec *suns, uint16_t model_id, cJSON *error_response);
+bool validate_patch_points(cJSON *points, SunSpec *suns, uint16_t model_id, cJSON *error_response);
+
+bool patch_points(cJSON *points, SunSpec *suns, uint16_t model_id, cJSON *error_response);

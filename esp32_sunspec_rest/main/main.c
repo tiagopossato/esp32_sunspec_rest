@@ -70,8 +70,8 @@ void app_main(void)
 
     while (1)
     {
-        // ESP_LOGI(TAG, "Free heap: %ld", esp_get_free_heap_size());
-        // ESP_LOGI(TAG, "Minimum free heap: %ld", esp_get_minimum_free_heap_size());
+        ESP_LOGI(TAG, "Free heap: %ld", esp_get_free_heap_size());
+        ESP_LOGI(TAG, "Minimum free heap: %ld", esp_get_minimum_free_heap_size());
         vTaskDelay(2000 / portTICK_PERIOD_MS);
     }
 
