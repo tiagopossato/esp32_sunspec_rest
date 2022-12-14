@@ -161,12 +161,15 @@ static esp_err_t get_all_models(httpd_req_t *req)
     // set connection close
     httpd_resp_set_hdr(req, "Connection", "close");
     httpd_resp_set_type(req, "application/json; charset=utf-8");
+    // pega o ponteiro para a estrutura com os dados SunSpec
     suns = get_sunspec();
+
     cJSON *root = cJSON_CreateObject();
+    // pega os dados de todos os modelos e coloca no JSON root
     sunspec_to_cjson(root, suns, summary);
     char *my_json_string = cJSON_Print(root);
     // cJSON_Minify(my_json_string);
-
+    // preenche os dados da resposta http
     httpd_resp_send(req, my_json_string, HTTPD_RESP_USE_STRLEN);
 
     cJSON_Delete(root);
@@ -199,6 +202,7 @@ static esp_err_t get_router(httpd_req_t *req)
         return get_all_models(req);
     }
 
+    // TODO: Tornar as linhas abaixo dinâmicas
     if (httpd_uri_match_wildcard("/v1/models/1/instances/0??*", req->uri, strlen(req->uri)))
     {
         return get_model(req, 1);
@@ -229,6 +233,140 @@ httpd_uri_t uri_get_models = {
     .uri = "/?*", // “?*” to make the previous character optional, and if present, allow anything to follow.
     .method = HTTP_GET,
     .handler = get_router};
+
+static bool httpd_uri_match_simple(const char *uri1, const char *uri2, size_t len2)
+{
+    return strlen(uri1) == len2 &&           // First match lengths
+           (strncmp(uri1, uri2, len2) == 0); // Then match actual URIs
+}
+
+static esp_err_t patch_router(httpd_req_t *req)
+{
+    if (basic_auth_handler(req) != ESP_OK)
+    {
+        // Caso a autenticação falhar, a requisição será preenchida com o código de erro
+        //  esta função deve retornar OK para que o servidor envie a resposta de erro
+        return ESP_OK;
+    }
+    // Caso a autenticação seja bem sucedida, a requisição prossegue normalmente
+
+    /**********TESTES***************/
+    char *buf;
+    size_t buf_len;
+    buf_len = httpd_req_get_hdr_value_len(req, "Content-Type") + 1;
+    if (buf_len > 1)
+    {
+        buf = malloc(buf_len);
+        /* Copy null terminated value string into buffer */
+        if (httpd_req_get_hdr_value_str(req, "Content-Type", buf, buf_len) == ESP_OK)
+        {
+            ESP_LOGI(TAG, "Found header => Content-Type: %s", buf);
+        }
+        free(buf);
+    }
+    /**********FIM DOS TESTES***************/
+    // TODO: Tornar as linhas abaixo dinâmicas
+    if (httpd_uri_match_simple("/v1/models/1/instances/0", req->uri, strlen(req->uri)))
+    {
+
+        // get http body
+        // verifica o tamanho do conteúdo da requisição
+        size_t recv_size = req->content_len;
+        // cria um buffer para armazenar o conteúdo da requisição
+        char *content = calloc(1, recv_size + 1);
+        // verifica se o buffer foi criado com sucesso
+        if (content == NULL)
+        {
+            ESP_LOGE(TAG, "Failed to allocate memory for content");
+            http_send_error(req, HTTPD_500, "PATCH-ERR01",
+                            "No  enough memory", "No enough memory for PATCH content",
+                            false, NULL);
+
+            return ESP_OK;
+        }
+        // lê o conteúdo da requisição
+        int ret = httpd_req_recv(req, content, recv_size);
+        // verifica se a leitura foi bem sucedida
+        if (ret <= 0)
+        { /* 0 return value indicates connection closed */
+            ESP_LOGE(TAG, "Failed to read content");
+            http_send_error(req, HTTPD_500, "PATCH-ERR02",
+                            "Failed to read content", "Failed to read content",
+                            false, NULL);
+            free(content);
+            return ESP_OK;
+        }
+
+        // print the content
+        ESP_LOGI(TAG, "Content: %s", content);
+
+        // transforma o texto recebido em um objeto JSON
+        cJSON *json_content = cJSON_Parse(content);
+        // validar
+        if (cJSON_IsObject(json_content) == false)
+        {
+            http_send_error(req, HTTPD_500, "PATCH-ERR03",
+                            "Failed to read json_content content", "Failed to read json_content content",
+                            false, NULL);
+            free(content);
+            return ESP_OK;
+        }
+
+        // pega o vetor de pontos
+        cJSON *array_points = cJSON_GetObjectItem(json_content, "points");
+        if (cJSON_IsArray(array_points) == false)
+        {
+            http_send_error(req, HTTPD_500, "PATCH-ERR04",
+                            "Failed to read points content", "Failed to read points content",
+                            false, NULL);
+            free(content);
+            return ESP_OK;
+        }
+
+        cJSON *error_response = cJSON_CreateObject();
+        suns = get_sunspec();
+        if (false == validate_and_patch_points(array_points, suns, 1, error_response))
+        {
+            // print error
+            char *my_json_string = cJSON_Print(error_response);
+            // printf("error_response: %s\n", my_json_string);
+
+            httpd_resp_set_hdr(req, "Connection", "close");
+            httpd_resp_set_type(req, "application/json; charset=utf-8");
+            httpd_resp_set_status(req, HTTPD_400);
+
+            httpd_resp_send(req, my_json_string, HTTPD_RESP_USE_STRLEN);
+
+            cJSON_Delete(error_response);
+            // cJSON_Delete(json_content);
+
+            free(my_json_string);
+            free(content);
+            return ESP_OK;
+        }
+
+        cJSON_Delete(error_response);
+        // cJSON_Delete(json_content);
+
+        // set connection close
+        httpd_resp_set_hdr(req, "Connection", "close");
+        httpd_resp_set_type(req, "application/json; charset=utf-8");
+        httpd_resp_send(req, content, HTTPD_RESP_USE_STRLEN);
+        free(content);
+        return ESP_OK;
+    }
+
+    http_send_error(req, HTTPD_404, "PATCH-ERR05",
+                    "URI no match", "URI no match",
+                    false, NULL);
+
+    return ESP_OK;
+}
+
+httpd_uri_t uri_patch_models = {
+    .uri = "/?*", // “?*” to make the previous character optional, and if present, allow anything to follow.
+    .method = HTTP_PATCH,
+    .handler = patch_router};
 
 static httpd_handle_t start_webserver(void)
 {
@@ -274,7 +412,13 @@ static httpd_handle_t start_webserver(void)
 
     if (httpd_register_uri_handler_with_auth(server, &uri_get_models) != ESP_OK)
     {
-        ESP_LOGI(TAG, "Error Registering URI handlerss!");
+        ESP_LOGI(TAG, "Error Registering URI uri_get_models!");
+        return NULL;
+    }
+
+    if (httpd_register_uri_handler_with_auth(server, &uri_patch_models) != ESP_OK)
+    {
+        ESP_LOGI(TAG, "Error Registering URI uri_patch_models!");
         return NULL;
     }
 

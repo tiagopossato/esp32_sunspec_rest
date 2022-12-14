@@ -41,7 +41,8 @@
         "system_error": "c",
         "functional": "c",
         "tuple": "c",
-        "type_traits": "c"
+        "type_traits": "c",
+        "future": "c"
     },
     "idf.flashType": "UART",
     "idf.port": "/dev/ttyUSB0",

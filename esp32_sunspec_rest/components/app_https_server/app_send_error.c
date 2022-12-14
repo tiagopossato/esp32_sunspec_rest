@@ -9,6 +9,18 @@
 #include "app_https_server.h"
 #include "sunspec_models.h"
 
+/**
+ * @brief Send error message to client
+ * @param[in] req HTTP request
+ * @param[in] http_status HTTP code
+ * @param errCode Error code that can be used programmatically
+ * @param errMessage Concise error message suitable for display.
+ * @param errReason Detailed error information describing the cause of the error in addition to the
+HTTP status code cause.
+ * @param debug Very detailed debug information.
+ * @param TBD TBD If debug is true, this field is required. Possibly add request information such as target resource, target values, and
+HTTP method.
+ */
 void http_send_error(httpd_req_t *req, const char *http_status,
                      char *errCode, char *errMessage, char *errReason,
                      bool debug, char *TBD)

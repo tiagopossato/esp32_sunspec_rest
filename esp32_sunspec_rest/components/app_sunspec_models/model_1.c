@@ -3,9 +3,12 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <string.h>
+#include "esp_log.h"
 
 #include "app_sunspec_models.h"
 #include "sunspec_models.h"
+
+static const char *TAG = "model_1";
 
 static model *m1;
 
@@ -16,6 +19,7 @@ static model *m1;
 #define DEVICE_ADDRESS_MAX 255
 
 uint16_t device_address;
+char serial_number_value[16];
 
 char *get_m1_p_id_value()
 {
@@ -41,24 +45,21 @@ char *get_m1_p_device_adress_value()
 
 char *get_m1_p_serial_number_value()
 {
-
-    return "WEFWR-ASD5FAS-2022";
+    return serial_number_value;
 }
 
-// recebe uma string contendo o valor e converte para um inteiro sem sinal.
-bool set_m1_p_device_adress_value(char *value, cJSON *error)
+bool validate_set_m1_p_device_adress_value(char *value, cJSON *error)
 {
+    ESP_LOGI(TAG, "validate_set_m1_p_device_adress_value %s", value);
     // converte o valor recebido em uint16_t
     uint16_t tmp = (uint16_t)strtoul(value, NULL, 10);
 
     // verifica se está dentro dos limites
     if (tmp < DEVICE_ADDRESS_MIN || tmp > DEVICE_ADDRESS_MAX)
     {
-        // bool new_error(cJSON *root, char *errCode,
-        //                char *errMessage, char *errReason,
-        //                bool debug, char *TBD)
         char *errReason;
-        asprintf(&errReason, "Device address should be between %d and %d.", DEVICE_ADDRESS_MIN, DEVICE_ADDRESS_MAX);
+        asprintf(&errReason, "Device address should be between %d and %d, NOT %d",
+                 DEVICE_ADDRESS_MIN, DEVICE_ADDRESS_MAX, tmp);
         new_error(error, "MODEL_1-ERR01",
                   "Value is out of range.", errReason,
                   false, NULL);
@@ -66,7 +67,46 @@ bool set_m1_p_device_adress_value(char *value, cJSON *error)
 
         return false;
     }
-    device_address = tmp;
+    return true;
+}
+
+// recebe uma string contendo o valor e converte para um inteiro sem sinal.
+bool set_m1_p_device_adress_value(char *value, cJSON *error)
+{
+    if (validate_set_m1_p_device_adress_value(value, error) == false)
+    {
+        return false;
+    }
+    // converte o valor recebido em uint16_t
+    device_address = (uint16_t)strtoul(value, NULL, 10);
+    return true;
+}
+
+bool validate_set_m1_p_serial_number_value(char *value, cJSON *error)
+{
+    ESP_LOGI(TAG, "validate_set_m1_p_serial_number_value %s", value);
+
+    // verifica se está dentro dos limites
+    if (strlen(value) > 16)
+    {
+        char *errReason;
+        asprintf(&errReason, "Serial number must have max 16 caracters");
+        new_error(error, "MODEL_1-ERR01",
+                  "Value is out of range.", errReason,
+                  false, NULL);
+        free(errReason);
+
+        return false;
+    }
+
+    return true;
+}
+
+// recebe uma string contendo o valor e converte para um inteiro sem sinal.
+bool set_m1_p_serial_number_value(char *value, cJSON *error)
+{
+    ESP_LOGI(TAG, "set_m1_p_serial_number_value %s", value);
+    snprintf(serial_number_value, 16, "%s", value);
     return true;
 }
 
@@ -111,6 +151,7 @@ model *init_model_1()
     asprintf(&pad->desc, "Force even alignment");
     asprintf(&pad->label, "Pad");
     pad->_static = st_S;
+    pad->next = NULL;
 
     point *device_addres = create_point("DA", pt_uint16, 1);
     device_addres->_access = at_RW;
@@ -118,16 +159,22 @@ model *init_model_1()
     asprintf(&device_addres->label, "Device Address");
     device_addres->get_value = get_m1_p_device_adress_value;
     device_addres->set_value = set_m1_p_device_adress_value;
+    device_addres->validate_set_value = validate_set_m1_p_device_adress_value;
     device_addres->next = pad; // TODO: apontar para o ponto correto
     (void)set_m1_p_device_adress_value("1", NULL);
 
     point *serial_number = create_point("SN", pt_string, 16);
+    device_addres->_access = at_RW;
     asprintf(&serial_number->desc, "Manufacturer specific value (32 chars)");
     asprintf(&serial_number->label, "Serial Number");
     serial_number->_mandatory = mt_M;
     serial_number->_static = st_S;
     serial_number->get_value = get_m1_p_serial_number_value;
+    serial_number->set_value = set_m1_p_serial_number_value;
+    serial_number->validate_set_value = validate_set_m1_p_serial_number_value;
     serial_number->next = device_addres;
+    snprintf(serial_number_value, 16, "asdASD-ASD");
+
 
     point *version = create_point("Vr", pt_string, 8);
     asprintf(&version->desc, "Manufacturer specific value (16 chars)");

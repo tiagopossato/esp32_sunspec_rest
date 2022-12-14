@@ -67,8 +67,9 @@ typedef struct point
 {
     char *name;
     point_type _type;
-    char *(*get_value)();      //"type": ["integer", "string"]
-    bool (*set_value)(char *value, cJSON *error); //"type": ["integer", "string"]
+    char *(*get_value)();      
+    bool (*set_value)(char *value, cJSON *error);
+    bool (*validate_set_value)(char *value, cJSON *error);
     int count;
     int size;
     int sf; // "type": ["integer", "string"], "minimum": -10, "maximum": 10
@@ -169,3 +170,18 @@ HTTP method.
 bool new_error(cJSON *root, char *errCode,
                char *errMessage, char *errReason,
                bool debug, char *TBD);
+
+/**
+ * @brief Valida array de pontos para atualizar um modelo via PATCH
+ * @param points cJSON array object com todos os pontos atualizáveis do modelo
+ * @param suns SunSpec
+ * @param model_id id do modelo
+ * @param error_response cJSON object para retornar o erro, caso haja
+ * @return true se todos os pontos são válidos
+ * @return false se algum ponto não é válido ou,
+ *  se o modelo não existe ou,
+ *  se tem algum ponto não atualizável ou,
+ *  se o modelo não tem pontos atualizáveis ou,
+ *  se algum valor a ser atualizado em algum ponto não é válido
+ */
+bool validate_and_patch_points(cJSON *points, SunSpec *suns, uint16_t model_id, cJSON *error_response);
