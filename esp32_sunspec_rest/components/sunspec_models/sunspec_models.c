@@ -579,18 +579,18 @@ bool validate_patch_points(cJSON *array_patch_points, SunSpec *suns, uint16_t mo
     // verifica se encontrou um modelo
     if (model_to_patch == NULL)
     {
-
         ESP_LOGE(TAG, "model_id %d not found", model_id);
         return false;
     }
 
-    // monta uma lista com todos os pontos atualizáveis do modelo
+    // pega o primeiro ponto do modelo
     point *point_to_patch = model_to_patch->group->points;
     if (point_to_patch == NULL)
     {
         ESP_LOGE(TAG, "model_id %d has no points", model_id);
         return false;
     }
+    // monta uma lista com todos os pontos atualizáveis do modelo
     cJSON *patchable_points = cJSON_CreateArray();
     while (point_to_patch != NULL)
     {
@@ -616,6 +616,8 @@ bool validate_patch_points(cJSON *array_patch_points, SunSpec *suns, uint16_t mo
     ESP_LOGI(TAG, "input_array_size: %d, patchable_points_size: %d",
              input_array_size, patchable_points_size);
 
+    /****-----PRIMEIRA VERIFICAÇÃO: QUANTIDADE DE PONTOS-----****/
+
     // verifica se a quantidade de pontos recebida é igual a quantidade de pontos editáveis
     if (input_array_size != patchable_points_size)
     {
@@ -630,6 +632,8 @@ bool validate_patch_points(cJSON *array_patch_points, SunSpec *suns, uint16_t mo
         return false;
     }
 
+    /****-----SEGUNDA VERIFICAÇÃO: COMPARA OS PONTOS EDITÁVEIS DO MODELO COM OS PONTOS RECEBIDOS-----****/
+
     // verifica se os pontos recebidos são os mesmos que os pontos editáveis
     // e valida os valores enviados
     for (uint16_t i = 0; i < patchable_points_size; i++)
@@ -642,15 +646,20 @@ bool validate_patch_points(cJSON *array_patch_points, SunSpec *suns, uint16_t mo
         // itera sobre os pontos recebidos para verificar se o ponto atual é um dos pontos recebidos
         for (uint16_t j = 0; j < patchable_points_size; j++)
         {
+            // pega o ponto j.
+            // Vai retornar um objeto com o nome do ponto e o valor. Ex: {"DA": 1}
             cJSON *ip = cJSON_GetArrayItem(array_patch_points, j);
+            // dentro de ip, pega o valor do ponto que está sendo verificado
             input_point = cJSON_GetObjectItemCaseSensitive(ip, patchable_point->child->string);
+            // verifica se o ponto atual foi encontrado
             if (input_point != NULL)
             {
                 break;
             }
         }
 
-        // verifica se o ponto atual foi encontrado
+        /****-----VERIFICAÇÃO: -----****/
+        // se o ponto não foi encontrado
         if (input_point == NULL)
         {
             char *errReason;
@@ -667,13 +676,17 @@ bool validate_patch_points(cJSON *array_patch_points, SunSpec *suns, uint16_t mo
         }
         // o ponto foi encontrado, então verifica se o valor é válido
 
+        /****-----TERCEIRA VERIFICAÇÃO: VALIDA O VALOR RECEBIDO-----****/
         // pega o primeiro ponto do modelo para verificar se o valor é válido
         point_to_patch = model_to_patch->group->points;
+        // Percorre todos os pontos do modelo, até encontrar o ponto que será validado
         while (point_to_patch != NULL)
         {
             // compara o nome do ponto atual com o nome do ponto a ser validado
             if (strcmp(point_to_patch->name, patchable_point->child->string) == 0)
             {
+                // Nesse momento, o ponto que se pretende validar foi encontrado no modelo
+                // verifica se o valor recebido é um objeto vazio, o que significa que não precisa validar
                 if (cJSON_IsObject(input_point))
                 {
                     ESP_LOGI(TAG, "input_point: %s está vazio e não necessita validação",
@@ -683,14 +696,18 @@ bool validate_patch_points(cJSON *array_patch_points, SunSpec *suns, uint16_t mo
                 }
                 else
                 {
+                    // o valor não é um objeto vazio, então precisa validar
+                    // ponteiro para receber o valor do ponto
                     char *pt_value;
+                    // verifica se o valor é uma string
                     if (cJSON_IsString(input_point))
                     {
-                        // ESP_LOGI(TAG, "input_point cJSON_IsString");
                         pt_value = cJSON_GetStringValue(input_point);
                     }
                     else
                     {
+                        // se não for uma string, então é um número
+                        // por causa da biblioteca cJSON, é necessário converter o número para string
                         pt_value = cJSON_Print(input_point);
                     }
                     ESP_LOGI(TAG, "input_point pt_value: %s", pt_value);
@@ -699,8 +716,13 @@ bool validate_patch_points(cJSON *array_patch_points, SunSpec *suns, uint16_t mo
                     {
                         // se a função retornar false, então o valor é inválido
                         // e a mensagem de erro já foi preenchida em error_response
+                        // liberar a memória alocada para o valor do ponto
                         if (cJSON_IsString(input_point))
                         {
+                            // se for string só apontar para NULL
+                            // pois o ponteiro pt_value aponta para
+                            // o mesmo endereço de memória do JSON.
+                            // Se executar free, vai dar erro
                             pt_value = NULL;
                         }
                         else
@@ -725,7 +747,7 @@ bool validate_patch_points(cJSON *array_patch_points, SunSpec *suns, uint16_t mo
             }
             point_to_patch = point_to_patch->next;
         }
-
+        // se o ponto não foi encontrado no modelo
         if (point_to_patch == NULL)
         {
             char *errReason;
@@ -775,6 +797,7 @@ bool patch_points(cJSON *array_patch_points, SunSpec *suns, uint16_t model_id, c
         return false;
     }
 
+    // pega o primeiro modelo
     model *model_to_patch = suns->first;
     if (model_to_patch == NULL)
     {
