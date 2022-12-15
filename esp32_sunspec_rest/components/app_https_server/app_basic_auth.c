@@ -199,16 +199,18 @@ esp_err_t basic_auth_handler(httpd_req_t *req)
 esp_err_t httpd_register_uri_handler_with_auth(httpd_handle_t handle,
                                                httpd_uri_t *uri_handler)
 {
+#ifdef AUTHENTICATION_ENABLE
     basic_auth_info_t *basic_auth_info = calloc(1, sizeof(basic_auth_info_t));
     if (basic_auth_info)
     {
-#ifdef AUTHENTICATION_ENABLE
         basic_auth_info->username = BASIC_AUTH_USERNAME;
         basic_auth_info->password = BASIC_AUTH_PASSWORD;
         uri_handler->user_ctx = basic_auth_info;
-#endif
-        httpd_register_uri_handler(handle, uri_handler);
-        return ESP_OK;
+        return httpd_register_uri_handler(handle, uri_handler);
     }
     return ESP_FAIL;
+
+#endif
+
+    return httpd_register_uri_handler(handle, uri_handler);
 }

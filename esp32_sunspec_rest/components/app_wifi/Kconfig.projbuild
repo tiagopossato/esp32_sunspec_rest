@@ -1,27 +1,72 @@
 menu "Wifi Configuration"
 
-    config ESP_WIFI_SSID
-        string "WiFi SSID"
+    config AP_ESP_WIFI_SSID
+        string "AP WiFi SSID"
         default "SunSpec server"
         help
             SSID (network name) for the example to connect to.
 
-    config ESP_WIFI_PASSWORD
-        string "WiFi Password"
+    config AP_ESP_WIFI_PASSWORD
+        string "AP WiFi Password"
         default ""
         help
             WiFi password (WPA or WPA2) for the example to use.
     
-    config ESP_WIFI_CHANNEL
-        int "WiFi Channel"
+    config AP_ESP_WIFI_CHANNEL
+        int "AP WiFi Channel"
         range 1 13
         default 1
         help
             WiFi channel (network channel) for the example to use.
 
-    config ESP_MAX_STA_CONN
-        int "Maximal STA connections"
+    config AP_ESP_MAX_STA_CONN
+        int "AP Maximal STA connections"
         default 1
         help
             Max number of the STA connects to AP.
+
+    config STA_ESP_WIFI_SSID
+        string "STA WiFi SSID"
+        default "myssid"
+        help
+            SSID (network name) for the example to connect to.
+
+    config STA_ESP_WIFI_PASSWORD
+        string "STA WiFi Password"
+        default "mypassword"
+        help
+            WiFi password (WPA or WPA2) for the example to use.
+
+    config STA_ESP_MAXIMUM_RETRY
+        int "STA Maximum retry"
+        default 5
+        help
+            Set the Maximum retry to avoid station reconnecting to the AP unlimited when the AP is really inexistent.
+
+    choice STA_ESP_WIFI_SCAN_AUTH_MODE_THRESHOLD
+        prompt "STA WiFi Scan auth mode threshold"
+        default STA_ESP_WIFI_AUTH_WPA2_PSK
+        help
+            The weakest authmode to accept in the scan mode.
+            This value defaults to ESP_WIFI_AUTH_WPA2_PSK incase password is present and ESP_WIFI_AUTH_OPEN is used.
+            Please select ESP_WIFI_AUTH_WEP/ESP_WIFI_AUTH_WPA_PSK incase AP is operating in WEP/WPA mode.
+
+        config STA_ESP_WIFI_AUTH_OPEN
+            bool "OPEN"
+        config STA_ESP_WIFI_AUTH_WEP
+            bool "WEP"
+        config STA_ESP_WIFI_AUTH_WPA_PSK
+            bool "WPA PSK"
+        config STA_ESP_WIFI_AUTH_WPA2_PSK
+            bool "WPA2 PSK"
+        config STA_ESP_WIFI_AUTH_WPA_WPA2_PSK
+            bool "WPA/WPA2 PSK"
+        config STA_ESP_WIFI_AUTH_WPA3_PSK
+            bool "WPA3 PSK"
+        config STA_ESP_WIFI_AUTH_WPA2_WPA3_PSK
+            bool "WPA2/WPA3 PSK"
+        config STA_ESP_WIFI_AUTH_WAPI_PSK
+            bool "WAPI PSK"
+    endchoice
+        
 endmenu

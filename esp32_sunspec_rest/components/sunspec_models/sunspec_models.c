@@ -769,23 +769,11 @@ bool patch_points(cJSON *array_patch_points, SunSpec *suns, uint16_t model_id, c
         return false;
     }
 
-    // copia os pontos recebidos para um novo objeto
-    // pois a função validate_patch_points altera o objeto
-
-    // cJSON *input_points = cJSON_Duplicate(array_patch_points, true);
-    // if (input_points == NULL)
-    // {
-    //     ESP_LOGE(TAG, "cJSON_Duplicate failed");
-    //     return false;
-    // }
-
     // valida o PATCH conforme as regras da especificação do SunSpec
     if (validate_patch_points(array_patch_points, suns, model_id, error_response) == false)
     {
-        // cJSON_Delete(input_points);
         return false;
     }
-    // cJSON_Delete(input_points);
 
     model *model_to_patch = suns->first;
     if (model_to_patch == NULL)

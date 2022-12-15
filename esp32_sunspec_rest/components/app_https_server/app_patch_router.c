@@ -113,13 +113,13 @@ static esp_err_t patch_model(httpd_req_t *req, uint16_t model_id)
     }
 
     cJSON_Delete(error_response);
-    cJSON_Delete(json_content);
 
     // set connection close
     httpd_resp_set_hdr(req, "Connection", "close");
     httpd_resp_set_type(req, "application/json; charset=utf-8");
     httpd_resp_send(req, content, HTTPD_RESP_USE_STRLEN);
     free(content);
+    cJSON_Delete(json_content);
     return ESP_OK;
 }
 

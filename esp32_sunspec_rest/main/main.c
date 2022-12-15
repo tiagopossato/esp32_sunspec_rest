@@ -30,8 +30,8 @@ void app_main(void)
     add_model(suns, model_307);
 
     // inicializa os sensores
-    // bmp280_begin();
-    // sht31_begin();
+    bmp280_begin();
+    sht31_begin();
 
     app_https_server_start();
 
