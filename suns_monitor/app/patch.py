@@ -7,7 +7,7 @@ from datetime import datetime
 requests.packages.urllib3.disable_warnings()
 print("\nATENÇÃO, WARNINGS DESABILITADOS\n")
 
-server_url = "https://192.168.1.27/v1/"
+server_url = "http://192.168.4.1/v1/"
 
 avg=0
 count=0
@@ -44,7 +44,7 @@ if __name__ == '__main__':
 
 # If a requested update cannot be performed, the request SHALL fail with no updates performed on the information model.
 
-    while(count<1):
+    while(count<1000):
         # envia uma requisição normal
         patch({"id":1, "points":[{"DA":count % 255},{"SN":f"{count % 500}-jkl"}]})
         # Model data that are not being updated SHALL be represented as empty objects.

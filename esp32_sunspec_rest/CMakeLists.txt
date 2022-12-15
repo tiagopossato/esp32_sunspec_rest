@@ -6,7 +6,7 @@ cmake_minimum_required(VERSION 3.16)
 # This example uses an extra component for common functions such as Wi-Fi and Ethernet connection.
 # set(EXTRA_COMPONENT_DIRS $ENV{IDF_PATH}/examples/common_components/protocol_examples_common ../esp-idf-lib/components)
 
-set(EXTRA_COMPONENT_DIRS ../esp-idf-lib/components)
+set(EXTRA_COMPONENT_DIRS ../esp-idf-lib/components )
 
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
 project(esp32_sunspec_rest)

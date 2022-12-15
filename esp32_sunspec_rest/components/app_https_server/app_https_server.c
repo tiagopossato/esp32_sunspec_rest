@@ -1,7 +1,6 @@
 #include <esp_event.h>
 #include <esp_log.h>
 #include "esp_wifi.h"
-#include <esp_system.h>
 #include <nvs_flash.h>
 #include <sys/param.h>
 #include "esp_netif.h"
@@ -55,7 +54,7 @@ static httpd_handle_t start_webserver(void)
 
 #ifdef HTTPS_SERVER_ENABLE
     httpd_ssl_config_t config = HTTPD_SSL_CONFIG_DEFAULT();
-    // config.httpd.lru_purge_enable = true; //Purge “Least Recently Used” connection
+    config.httpd.lru_purge_enable = true; // Purge “Least Recently Used” connection
 
     extern const unsigned char servercert_start[] asm("_binary_servercert_pem_start");
     extern const unsigned char servercert_end[] asm("_binary_servercert_pem_end");
@@ -72,7 +71,7 @@ static httpd_handle_t start_webserver(void)
     esp_err_t ret = httpd_ssl_start(&server, &config);
 #else
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
-    // config.lru_purge_enable = true;//Purge “Least Recently Used” connection
+    config.lru_purge_enable = true; // Purge “Least Recently Used” connection
     config.uri_match_fn = httpd_uri_match_wildcard;
 
     // Start the httpd server
@@ -146,21 +145,32 @@ void app_https_server_start(void)
     static httpd_handle_t server = NULL;
 
     ESP_ERROR_CHECK(nvs_flash_init());
+
+    // Initialize the underlying TCP/IP stack.
     ESP_ERROR_CHECK(esp_netif_init());
     ESP_ERROR_CHECK(esp_event_loop_create_default());
 
     /* Register event handlers to start server when Wi-Fi is connected,
      * and stop server when disconnection happens.
      */
+    // AP mode
+#ifdef WIFI_SOFTAP_MODE
+    ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_AP_STAIPASSIGNED, &connect_handler, &server));
+    ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, WIFI_EVENT_AP_STADISCONNECTED, &disconnect_handler, &server));
+#else
+    // STA mode
     ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &connect_handler, &server));
     ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, WIFI_EVENT_STA_CONNECTED, &disconnect_handler, &server));
-
-    // ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_AP_STAIPASSIGNED, &connect_handler, &server));
-    // ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, WIFI_EVENT_AP_STADISCONNECTED, &disconnect_handler, &server));
-
+#endif
 
     /* Start the server for the first time */
     server = start_webserver();
 
+#ifdef WIFI_SOFTAP_MODE
+#warning "SoftAP mode"
+    app_wifi_init_softap();
+#else
+#warning "STA mode"
     app_wifi_init_sta();
+#endif
 }

@@ -43,7 +43,11 @@
         "tuple": "c",
         "type_traits": "c",
         "future": "c",
-        "esp_event.h": "c"
+        "esp_event.h": "c",
+        "esp_system.h": "c",
+        "param.h": "c",
+        "sys.h": "c",
+        "mdns.h": "c"
     },
     "idf.flashType": "UART",
     "idf.port": "/dev/ttyUSB0",
