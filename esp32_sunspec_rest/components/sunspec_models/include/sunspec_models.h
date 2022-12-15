@@ -172,7 +172,7 @@ bool new_error(cJSON *root, char *errCode,
                bool debug, char *TBD);
 
 /**
- * @brief Valida array de pontos para atualizar um modelo via PATCH
+ * @brief Valida e atualiza array de pontos para atualizar um modelo via PATCH
  * @param points cJSON array object com todos os pontos atualizáveis do modelo
  * @param suns SunSpec
  * @param model_id id do modelo
@@ -184,6 +184,4 @@ bool new_error(cJSON *root, char *errCode,
  *  se o modelo não tem pontos atualizáveis ou,
  *  se algum valor a ser atualizado em algum ponto não é válido
  */
-bool validate_patch_points(cJSON *points, SunSpec *suns, uint16_t model_id, cJSON *error_response);
-
-bool patch_points(cJSON *points, SunSpec *suns, uint16_t model_id, cJSON *error_response);
+bool patch_points(cJSON *array_patch_points, SunSpec *suns, uint16_t model_id, cJSON *error_response);

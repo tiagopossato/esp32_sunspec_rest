@@ -53,11 +53,11 @@ void app_main(void)
     // printf("%s\n", my_json_string);
 
     // cJSON *array_points = cJSON_GetObjectItem(root, "points");
-    // //my_json_string = cJSON_Print(array_points);
-    // //printf("array_points:n%s\n", my_json_string);
+    // // my_json_string = cJSON_Print(array_points);
+    // // printf("array_points:n%s\n", my_json_string);
 
     // cJSON *error_response = cJSON_CreateObject();
-    // if (false == validate_and_patch_points(array_points, suns, 1, error_response))
+    // if (false == patch_points(array_points, suns, 1, error_response))
     // {
     //     // print error
     //     my_json_string = cJSON_Print(error_response);
@@ -65,7 +65,7 @@ void app_main(void)
     // }
 
     // cJSON_Delete(root);
-    
+
     // free(my_json_string);
 
     while (1)

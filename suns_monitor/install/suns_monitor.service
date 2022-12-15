@@ -7,7 +7,7 @@ After=multi-user.target
 User=#user#
 
 WorkingDirectory=/opt/suns_monitor
-Environment="PATH=/opt/suns_monitor/virtualEnv/bin"
+#Environment="PATH=/opt/suns_monitor/virtualEnv/bin"
 ExecStart=python3 app/suns_monitor.py
 
 [Install]

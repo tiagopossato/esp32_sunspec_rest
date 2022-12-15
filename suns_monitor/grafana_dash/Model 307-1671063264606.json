@@ -66,8 +66,8 @@
       },
       "gridPos": {
         "h": 6,
-        "w": 7,
-        "x": 0,
+        "w": 6,
+        "x": 1,
         "y": 1
       },
       "id": 2,
@@ -150,8 +150,8 @@
       },
       "gridPos": {
         "h": 6,
-        "w": 7,
-        "x": 7,
+        "w": 6,
+        "x": 9,
         "y": 1
       },
       "id": 3,
@@ -243,7 +243,7 @@
       "gridPos": {
         "h": 6,
         "w": 6,
-        "x": 14,
+        "x": 17,
         "y": 1
       },
       "id": 4,
@@ -621,7 +621,7 @@
       "type": "timeseries"
     }
   ],
-  "refresh": "5s",
+  "refresh": "10s",
   "schemaVersion": 37,
   "style": "dark",
   "tags": [],
@@ -629,7 +629,7 @@
     "list": []
   },
   "time": {
-    "from": "now-30m",
+    "from": "now-5m",
     "to": "now"
   },
   "timepicker": {
@@ -648,6 +648,6 @@
   "timezone": "",
   "title": "Model 307",
   "uid": "5XpM2z5Vk",
-  "version": 24,
+  "version": 29,
   "weekStart": ""
 }

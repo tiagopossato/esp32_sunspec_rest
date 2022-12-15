@@ -5,7 +5,8 @@
   - em beta
 
 - PATCH
-
+  - em beta
+  
 - Autenticação
   - em beta
 

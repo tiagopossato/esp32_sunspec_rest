@@ -46,9 +46,9 @@ fi
 # sudo apt install python3 python3-pip python3-venv
 
 # Copia a pasta do app
-# cp -r ../app /opt/suns_monitor/app
+cp -r ../app /opt/suns_monitor/app
 
-# cp uninstall.sh /opt/suns_monitor/uninstall.sh
+cp uninstall.sh /opt/suns_monitor/uninstall.sh
 
 # Verifica se não existe o banco de dados
 if [ ! -d /opt/suns_monitor/db ]; then
@@ -56,7 +56,7 @@ if [ ! -d /opt/suns_monitor/db ]; then
     mkdir /opt/suns_monitor/db
 else
     echo ""
-    echo "ATENÇÃO"
+    echo "WARNING"
     echo "------The database already exists. Please verify if the migration is necessary------"
     echo ""
 fi
@@ -74,10 +74,10 @@ fi
 chown -R ${user}:${user} /opt/suns_monitor
 
 # Copia o arquivo do serviço suns_monitor-save
-# cp suns_monitor.service /etc/systemd/system/suns_monitor.service
-# sed -i 's/#user#/'$user'/g' /etc/systemd/system/suns_monitor.service
+cp suns_monitor.service /etc/systemd/system/suns_monitor.service
+sed -i 's/#user#/'$user'/g' /etc/systemd/system/suns_monitor.service
 
-# echo "Atualizando script de inicialização"
-# chmod 644 /etc/systemd/system/suns_monitor.service
-# systemctl enable suns_monitor.service
-# systemctl restart suns_monitor.service
+echo "Atualizando script de inicialização"
+chmod 644 /etc/systemd/system/suns_monitor.service
+systemctl enable suns_monitor.service
+systemctl restart suns_monitor.service

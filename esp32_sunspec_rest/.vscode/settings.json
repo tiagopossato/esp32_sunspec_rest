@@ -42,7 +42,8 @@
         "functional": "c",
         "tuple": "c",
         "type_traits": "c",
-        "future": "c"
+        "future": "c",
+        "esp_event.h": "c"
     },
     "idf.flashType": "UART",
     "idf.port": "/dev/ttyUSB0",

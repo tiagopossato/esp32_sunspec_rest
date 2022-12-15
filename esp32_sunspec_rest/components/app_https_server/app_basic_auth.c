@@ -78,6 +78,10 @@ static char *http_auth_basic(const char *username, const char *password)
  */
 esp_err_t basic_auth_handler(httpd_req_t *req)
 {
+#ifndef AUTHENTICATION_ENABLE
+    return ESP_OK;
+#endif
+
     char *buf = NULL;
     size_t buf_len = 0;
 
@@ -158,7 +162,7 @@ esp_err_t basic_auth_handler(httpd_req_t *req)
         // se a string de autenticação básica for igual da string do cabeçalho
         // o usuário está autenticado
         // libera a memória alocada para a string de autenticação básica e o cabeçalho
-        // não toca na memória alocada para o conteúdo do cabeçalho
+        // não toca na requisição
         // retorna sucesso
         else
         {
@@ -198,10 +202,11 @@ esp_err_t httpd_register_uri_handler_with_auth(httpd_handle_t handle,
     basic_auth_info_t *basic_auth_info = calloc(1, sizeof(basic_auth_info_t));
     if (basic_auth_info)
     {
+#ifdef AUTHENTICATION_ENABLE
         basic_auth_info->username = BASIC_AUTH_USERNAME;
         basic_auth_info->password = BASIC_AUTH_PASSWORD;
-
         uri_handler->user_ctx = basic_auth_info;
+#endif
         httpd_register_uri_handler(handle, uri_handler);
         return ESP_OK;
     }
