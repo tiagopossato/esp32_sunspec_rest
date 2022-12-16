@@ -443,7 +443,7 @@ void get_points_by_name(cJSON *root, model *m, char *point_name_csv)
 {
     point *p;
     char *token;
-    const char separator[2] = ",";
+    const char *separator = ",";
 
     // ESP_LOGI("TAG", "point_name_csv: %s", point_name_csv);
     // take first token
