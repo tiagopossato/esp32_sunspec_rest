@@ -12,7 +12,7 @@ requests.packages.urllib3.disable_warnings()
 print("\nATENÇÃO, WARNINGS DESABILITADOS\n")
 
 # variables to connect to the REST API
-server_url = "https://192.168.1.27/v1/"
+server_url = "https://10.42.0.136/v1/"
 # parameters to get data
 model = 307
 instance = 0

@@ -7,7 +7,7 @@ from datetime import datetime
 requests.packages.urllib3.disable_warnings()
 print("\nATENÇÃO, WARNINGS DESABILITADOS\n")
 
-server_url = "https://192.168.1.27/v1/"
+server_url = "https://10.42.0.136/v1/"
 
 avg=0
 count=0
