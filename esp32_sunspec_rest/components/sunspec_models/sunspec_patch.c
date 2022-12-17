@@ -66,6 +66,10 @@ bool validate_patch_points(cJSON *array_patch_points, SunSpec *suns, uint16_t mo
         return false;
     }
     // monta uma lista com todos os pontos atualizáveis do modelo
+    
+    // IDEIA: ao invés de fazer um array JSON, fazer uma lista encadeado de points,
+    // isso evita de efetuar a busca mais adiante, onde é feito a validação do valor
+    // recebido através da função validate_set_value
     cJSON *patchable_points = cJSON_CreateArray();
     while (point_to_patch != NULL)
     {
