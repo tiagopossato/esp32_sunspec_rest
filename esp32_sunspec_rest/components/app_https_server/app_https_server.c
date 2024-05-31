@@ -1,16 +1,17 @@
+#include "cJSON.h"
+#include "esp_netif.h"
+#include "esp_wifi.h"
+#include "mdns.h"
 #include <esp_event.h>
 #include <esp_log.h>
-#include "esp_wifi.h"
 #include <nvs_flash.h>
 #include <sys/param.h>
-#include "esp_netif.h"
-#include "cJSON.h"
 
 #include "esp_tls.h"
 #include "sdkconfig.h"
 
-#include "app_wifi.h"
 #include "app_https_server.h"
+#include "app_wifi.h"
 
 #ifdef HTTPS_SERVER_ENABLE // definido em app_https_server.h
 #include <esp_https_server.h>
@@ -36,141 +37,153 @@ extern esp_err_t get_router(httpd_req_t *req);
 // Desta forma todas as requisições devem passar pela função de roteamento,
 // responsável pela autenticação e despacho das requisições
 httpd_uri_t uri_get_models = {
-    .uri = "/?*", // “?*” to make the previous character optional, and if present, allow anything to follow.
+    .uri = "/?*", // “?*” to make the previous character optional, and if
+                  // present, allow anything to follow.
     .method = HTTP_GET,
     .handler = get_router};
 
 httpd_uri_t uri_patch_models = {
-    .uri = "/?*", // “?*” to make the previous character optional, and if present, allow anything to follow.
+    .uri = "/?*", // “?*” to make the previous character optional, and if
+                  // present, allow anything to follow.
     .method = HTTP_PATCH,
     .handler = patch_router};
 
-static httpd_handle_t start_webserver(void)
-{
-    httpd_handle_t server = NULL;
+static httpd_handle_t start_webserver(void) {
+  httpd_handle_t server = NULL;
 
-    // Start the httpd server
-    ESP_LOGI(TAG, "Starting server");
+  // Start the httpd server
+  ESP_LOGI(TAG, "Starting server");
 
 #ifdef HTTPS_SERVER_ENABLE
-    httpd_ssl_config_t config = HTTPD_SSL_CONFIG_DEFAULT();
-    config.httpd.lru_purge_enable = true; // Purge “Least Recently Used” connection
+  httpd_ssl_config_t config = HTTPD_SSL_CONFIG_DEFAULT();
+  config.httpd.lru_purge_enable =
+      true; // Purge “Least Recently Used” connection
 
-    extern const unsigned char servercert_start[] asm("_binary_servercert_pem_start");
-    extern const unsigned char servercert_end[] asm("_binary_servercert_pem_end");
-    config.servercert = servercert_start;
-    config.servercert_len = servercert_end - servercert_start;
+  extern const unsigned char servercert_start[] asm(
+      "_binary_servercert_pem_start");
+  extern const unsigned char servercert_end[] asm("_binary_servercert_pem_end");
+  config.servercert = servercert_start;
+  config.servercert_len = servercert_end - servercert_start;
 
-    extern const unsigned char prvtkey_pem_start[] asm("_binary_prvtkey_pem_start");
-    extern const unsigned char prvtkey_pem_end[] asm("_binary_prvtkey_pem_end");
-    config.prvtkey_pem = prvtkey_pem_start;
-    config.prvtkey_len = prvtkey_pem_end - prvtkey_pem_start;
+  extern const unsigned char prvtkey_pem_start[] asm(
+      "_binary_prvtkey_pem_start");
+  extern const unsigned char prvtkey_pem_end[] asm("_binary_prvtkey_pem_end");
+  config.prvtkey_pem = prvtkey_pem_start;
+  config.prvtkey_len = prvtkey_pem_end - prvtkey_pem_start;
 
-    config.httpd.uri_match_fn = httpd_uri_match_wildcard;
+  config.httpd.uri_match_fn = httpd_uri_match_wildcard;
 
-    esp_err_t ret = httpd_ssl_start(&server, &config);
+  esp_err_t ret = httpd_ssl_start(&server, &config);
 #else
-    httpd_config_t config = HTTPD_DEFAULT_CONFIG();
-    config.lru_purge_enable = true; // Purge “Least Recently Used” connection
-    config.uri_match_fn = httpd_uri_match_wildcard;
+  httpd_config_t config = HTTPD_DEFAULT_CONFIG();
+  config.lru_purge_enable = true; // Purge “Least Recently Used” connection
+  config.uri_match_fn = httpd_uri_match_wildcard;
 
-    // Start the httpd server
-    esp_err_t ret = httpd_start(&server, &config);
+  // Start the httpd server
+  esp_err_t ret = httpd_start(&server, &config);
 #endif
 
-    if (ESP_OK != ret)
-    {
-        ESP_LOGI(TAG, "Error starting server!");
-        return NULL;
-    }
+  if (ESP_OK != ret) {
+    ESP_LOGI(TAG, "Error starting server!");
+    return NULL;
+  }
 
-    // Set URI handlers
-    ESP_LOGI(TAG, "Registering URI handlers");
+  // Set URI handlers
+  ESP_LOGI(TAG, "Registering URI handlers");
 
-    if (httpd_register_uri_handler_with_auth(server, &uri_get_models) != ESP_OK)
-    {
-        ESP_LOGI(TAG, "Error Registering URI uri_get_models!");
-        return NULL;
-    }
+  if (httpd_register_uri_handler_with_auth(server, &uri_get_models) != ESP_OK) {
+    ESP_LOGI(TAG, "Error Registering URI uri_get_models!");
+    return NULL;
+  }
 
-    if (httpd_register_uri_handler_with_auth(server, &uri_patch_models) != ESP_OK)
-    {
-        ESP_LOGI(TAG, "Error Registering URI uri_patch_models!");
-        return NULL;
-    }
+  if (httpd_register_uri_handler_with_auth(server, &uri_patch_models) !=
+      ESP_OK) {
+    ESP_LOGI(TAG, "Error Registering URI uri_patch_models!");
+    return NULL;
+  }
 
-    return server;
+  return server;
 }
 
-static esp_err_t stop_webserver(httpd_handle_t server)
-{
+static esp_err_t stop_webserver(httpd_handle_t server) {
 #ifdef HTTPS_SERVER_ENABLE
-    // Stop the httpd server
-    return httpd_ssl_stop(server);
+  // Stop the httpd server
+  return httpd_ssl_stop(server);
 #else
-    // Stop the httpd server
-    return httpd_stop(server);
+  // Stop the httpd server
+  return httpd_stop(server);
 #endif
 }
 
 static void disconnect_handler(void *arg, esp_event_base_t event_base,
-                               int32_t event_id, void *event_data)
-{
-    httpd_handle_t *server = (httpd_handle_t *)arg;
-    if (*server)
-    {
-        if (stop_webserver(*server) == ESP_OK)
-        {
-            *server = NULL;
-        }
-        else
-        {
-            ESP_LOGE(TAG, "Failed to stop https server");
-        }
+                               int32_t event_id, void *event_data) {
+  httpd_handle_t *server = (httpd_handle_t *)arg;
+  if (*server) {
+    if (stop_webserver(*server) == ESP_OK) {
+      *server = NULL;
+    } else {
+      ESP_LOGE(TAG, "Failed to stop https server");
     }
+  }
 }
 
 static void connect_handler(void *arg, esp_event_base_t event_base,
-                            int32_t event_id, void *event_data)
-{
-    httpd_handle_t *server = (httpd_handle_t *)arg;
-    if (*server == NULL)
-    {
-        *server = start_webserver();
-    }
+                            int32_t event_id, void *event_data) {
+  httpd_handle_t *server = (httpd_handle_t *)arg;
+  if (*server == NULL) {
+    *server = start_webserver();
+  }
 }
 
-void app_https_server_start(void)
-{
-    static httpd_handle_t server = NULL;
+void app_mdns_start(void) {
+  // initialize mDNS service
+  esp_err_t err = mdns_init();
+  if (err) {
+    printf("MDNS Init failed: %d\n", err);
+    return;
+  }
 
-    ESP_ERROR_CHECK(nvs_flash_init());
+  // set hostname
+  mdns_hostname_set("sunspec");
+  // set default instance
+  mdns_instance_name_set("SUNSPEC RESTFull API");
+}
 
-    // Initialize the underlying TCP/IP stack.
-    ESP_ERROR_CHECK(esp_netif_init());
-    ESP_ERROR_CHECK(esp_event_loop_create_default());
+void app_https_server_start(void) {
+  static httpd_handle_t server = NULL;
 
-    /* Register event handlers to start server when Wi-Fi is connected,
-     * and stop server when disconnection happens.
-     */
-    // AP mode
+  ESP_ERROR_CHECK(nvs_flash_init());
+
+  // Initialize the underlying TCP/IP stack.
+  ESP_ERROR_CHECK(esp_netif_init());
+  ESP_ERROR_CHECK(esp_event_loop_create_default());
+
+  /* Register event handlers to start server when Wi-Fi is connected,
+   * and stop server when disconnection happens.
+   */
+  // AP mode
 #ifdef WIFI_SOFTAP_MODE
-    ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_AP_STAIPASSIGNED, &connect_handler, &server));
-    ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, WIFI_EVENT_AP_STADISCONNECTED, &disconnect_handler, &server));
+  ESP_ERROR_CHECK(esp_event_handler_register(
+      IP_EVENT, IP_EVENT_AP_STAIPASSIGNED, &connect_handler, &server));
+  ESP_ERROR_CHECK(esp_event_handler_register(
+      WIFI_EVENT, WIFI_EVENT_AP_STADISCONNECTED, &disconnect_handler, &server));
 #else
-    // STA mode
-    ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &connect_handler, &server));
-    ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, WIFI_EVENT_STA_CONNECTED, &disconnect_handler, &server));
+  // STA mode
+  ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP,
+                                             &connect_handler, &server));
+  ESP_ERROR_CHECK(esp_event_handler_register(
+      WIFI_EVENT, WIFI_EVENT_STA_CONNECTED, &disconnect_handler, &server));
 #endif
 
-    /* Start the server for the first time */
-    server = start_webserver();
+  /* Start the server for the first time */
+  server = start_webserver();
 
 #ifdef WIFI_SOFTAP_MODE
 #warning "SoftAP mode"
-    app_wifi_init_softap();
+  app_wifi_init_softap();
 #else
 #warning "STA mode"
-    app_wifi_init_sta();
+  app_wifi_init_sta();
 #endif
+  app_mdns_start();
 }

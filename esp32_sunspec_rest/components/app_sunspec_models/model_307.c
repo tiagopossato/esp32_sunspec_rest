@@ -29,7 +29,7 @@ char *get_m307_p_length_value()
 char *get_m307_p_temperature_value()
 {
     static char tmp[6];
-    sprintf(tmp, "%d", (int)(get_sht_temperature() * 10));
+    sprintf(tmp, "%d", (int)(get_bmp_temperature() * 10));
     return tmp;
 }
 
@@ -104,7 +104,7 @@ model *init_model_307()
     asprintf(&m307->group->label, "Base Met");
 
     // cria os pontos do modelo.
-    // IMPORTANTE: para facilitar a programação, iniciar do último para o primeir0
+    // IMPORTANTE: para facilitar a programação, iniciar do último para o primeiro
     //              assim já é possível ir associando o ponteiro *next
 
     // point *wind_direction = create_point("WndDir", pt_int16, 1);
@@ -161,18 +161,18 @@ model *init_model_307()
     pressure->get_value = get_m307_p_pressure_value;
     pressure->next = NULL;
 
-    point *humidity = create_point("RH", pt_int16, 1);
-    asprintf(&humidity->label, "Relative Humidity");
-    asprintf(&humidity->units, "Pct");
-    humidity->get_value = get_m307_p_humidity_value;
-    humidity->next = pressure;
+    // point *humidity = create_point("RH", pt_int16, 1);
+    // asprintf(&humidity->label, "Relative Humidity");
+    // asprintf(&humidity->units, "Pct");
+    // humidity->get_value = get_m307_p_humidity_value;
+    // humidity->next = pressure;
 
     point *temperature = create_point("TmpAmb", pt_int16, 1);
     asprintf(&temperature->label, "Ambient Temperature");
     temperature->sf = -1;
     asprintf(&temperature->units, "C");
     temperature->get_value = get_m307_p_temperature_value;
-    temperature->next = humidity;
+    temperature->next = pressure;
 
     point *md_length = create_point("L", pt_uint16, 1);
     asprintf(&md_length->desc, "Model length");
@@ -190,7 +190,7 @@ model *init_model_307()
     model_id->get_value = get_m307_p_id_value;
     model_id->next = md_length;
 
-    m307->group->count = 5;
+    m307->group->count = 4;
 
     // associa o primeiro ponto ao ponto id
     m307->group->points = model_id;

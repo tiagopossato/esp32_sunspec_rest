@@ -2,7 +2,8 @@
 
 #define HTTPS_SERVER_ENABLE
 #define AUTHENTICATION_ENABLE
-// #define WIFI_SOFTAP_MODE
+
+#define WIFI_SOFTAP_MODE
 
 #ifdef __cplusplus
 extern "C"
