@@ -1,1 +1,1 @@
-![Entity relationship diagram](../../../doc/definitions.pngs)
+![Entity relationship diagram](../../../doc/definitions.png)
